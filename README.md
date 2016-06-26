@@ -1,6 +1,6 @@
 # multiserver
 
-A single interface that can create multiple protocols at once.
+A single interface that can work with multiple protocols at once.
 
 ## motivation
 
@@ -28,10 +28,83 @@ for non security reasons. servers with stable IP addresses can use TCP, but your
 probably needs [utp](https://github.com/mafintosh/utp-native). Browser clients don't
 have those options, but they can use webrtc and websockets.
 
-## examples
+---
+
+so we have protocols, like (tcp, ws, tor, utp, webrtc).
+and then we _also_ have security protocols, often,
+these wrap a specific network protocol, which makes them inflexible,
+but really, they could be implemented as duplex transforms,
+https://github.com/auditdrivencrypto/secret-handshake/
+
+you connect to a peer over a raw, then wrap the security layer.
+you could represent this as a composition!
+`net:<host>:<port>|shs:<key>`
+
+remember, these are duplex streams, so `shs` would wrap `net`.
+It may help to think of it like:
+
+`shs(net(<host>:<port>), <key>)`
+
+another example would be to use compression.
+
+`net:<host>:<port>|shs:<key>|gzip`
+
+now we have added compression on the inside of the encryption.
+
+> NOTE: I am still deciding what the syntax for representing addresses are.
+
+## example - server with net and ws
+
+create a server that listens on tcp and websockets,
+then create a client that connects to the websocket interface.
+
+```
+var handers = [
+  require('multiserver/protocols/net'),
+  require('multiserver/protocols/ws')
+]
+var MultiServer = require('multiserver')(handlers)
+
+MultiServer.createServer([
+  {protocol:'ws', port: 1234},
+  {protocol:'net', port: 2345}
+], function (stream) {
+  //handle incoming connection
+})
+
+MultiServer.connect({protocol:'ws', port: 1234}, function (err, stream) {
+  //...
+})
+```
+
+### example - server with two security protocols
+
+> not implemented yet
+
+```
+var handers = [
+  require('multiserver/protocols/net'),
+  require('secret-handshake/multiserver')
+  require('secret-handshake2/multiserver')
+]
+var MultiServer = require('multiserver')(handlers)
+
+MultiServer.createServer([
+  [{protocol:'net', port: 3001}, {protocol: 'shs', keys: <key>}],
+  [{protocol:'net', port: 3002}, {protocol: 'shs2', keys: <keys>}]
+], function (stream) {
+
+})
+
+MultiServer.connect(  [
+  {protocol:'net', port: 3002}, //connect to this port
+  {protocol: 'shs2', key: <key>} //then use this encryption protocol.
+], function (err, stream) {
+  //...
+})
+```
 
 ## License
 
 MIT
-
 

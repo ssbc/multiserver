@@ -1,5 +1,5 @@
 var WS = require('pull-ws')
-
+var URL = require('url')
 module.exports = function () {
   return {
     protocol: 'ws',
@@ -13,7 +13,7 @@ module.exports = function () {
     connect: function (addr, cb) {
       if('object' == typeof addr) {
         addr.host = addr.host || 'localhost'
-        addr = url.format(addr)
+        addr = URL.format(addr)
       }
       return WS.connect(addr, {onConnect: cb})
     }
