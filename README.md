@@ -58,7 +58,7 @@ now we have added compression on the inside of the encryption.
 create a server that listens on tcp and websockets,
 then create a client that connects to the websocket interface.
 
-```
+``` js
 var handers = [
   require('multiserver/protocols/net'),
   require('multiserver/protocols/ws')
@@ -81,7 +81,7 @@ MultiServer.connect({protocol:'ws', port: 1234}, function (err, stream) {
 
 > not implemented yet
 
-```
+``` js
 var handers = [
   require('multiserver/protocols/net'),
   require('secret-handshake/multiserver')
