@@ -80,7 +80,7 @@ tape('connect error: net', function (t) {
 tape('connect error: ws', function (t) {
 
   ms.connect(
-    {protocol: 'ws', port: 9934}],
+    {protocol: 'ws', port: 9934},
 //    'ws://localhost:9934',
     function (err, stream) {
       t.ok(err)

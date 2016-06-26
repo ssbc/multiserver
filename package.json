@@ -8,6 +8,11 @@
     "url": "git://github.com/dominictarr/multiserver.git"
   },
   "dependencies": {
+    "ws": "~0.4.32",
+    "pull-ws": "~1.1.0",
+    "stream-to-pull-stream": "~1.6.0",
+    "pull-cat": "~1.1.5",
+    "pull-stream": "~2.26.0"
   },
   "devDependencies": {
   },
@@ -15,5 +20,8 @@
     "test": "set -e; for t in test/*.js; do node $t; done"
   },
   "author": "'Dominic Tarr' <dominic.tarr@gmail.com> (dominictarr.com)",
-  "license": "MIT"  
+  "license": "MIT"
 }
+
+
+
