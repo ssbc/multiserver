@@ -16,8 +16,6 @@
 
 */
 
-var compose = require('./compose')
-
 var isArray = Array.isArray
 function head (opts) {
   return isArray(opts) ? opts[0] : opts
@@ -43,7 +41,7 @@ function parse (u) {
 
 module.exports = function (handlers) {
   function findProto (opts) {
-    if(!opts) throw new Error('expected protocol descritpion')
+    if(!opts) throw new Error('expected protocol description')
     return handlers.find(function (e) {
       var protocol = opts.protocol.replace(/:$/,'')
       return e.protocol == protocol || e.name == protocol
@@ -52,8 +50,10 @@ module.exports = function (handlers) {
 
   function transforms (opts, isServer) {
     return opts.map(function (opt) {
-      var create = findProto(opt) // create server???
-      return function (stream, cb) { create(stream, cb) }
+      var create = findProto(opt)(opt) // create server???
+      return function (stream, cb) {
+        create(stream, cb)
+      }
     })
   }
 
