@@ -9,10 +9,8 @@ function createGunzip () {
   return toPull.transform(zlib.createGunzip())
 }
 
-module.exports = function (opts) {
-  return function gzip (stream,  cb) {
-    console.log('GZIP', stream, opts)
-    var zip = 
+module.exports = function gzip () {
+  return function (stream,  cb) {
     cb(null, {
       source: pull(stream.source, createGunzip()),
       sink: pull(createGzip(), stream.sink)
@@ -20,6 +18,8 @@ module.exports = function (opts) {
 
   }
 }
+
+
 
 
 
