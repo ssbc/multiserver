@@ -12,11 +12,20 @@ module.exports = function () {
     },
     connect: function (addr, cb) {
       if('object' == typeof addr) {
-        addr.host = addr.host || 'localhost'
+        if(!addr.host)
+          addr.hostname = addr.hostname || 'localhost'
+        addr.slashes = true
         addr = URL.format(addr)
       }
-      return WS.connect(addr, {onConnect: cb})
+      var stream = WS.connect(addr, {onConnect: function (err) {
+        cb(err, stream)
+      }})
     }
   }
 }
+
+
+
+
+
 
