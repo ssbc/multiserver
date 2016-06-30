@@ -5,7 +5,7 @@ var GZip = require('../transforms/gzip')
 var pull = require('pull-stream')
 var ReadFile = require('pull-file')
 
-var MultiServer = require('../')([Net(), GZip()])
+var MultiServer = require('../')([Net(), GZip])
 
 var close = MultiServer.createServer([
   [{protocol:'net', port: 9898}, {protocol: 'gzip'}]
