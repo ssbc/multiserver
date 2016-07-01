@@ -1,4 +1,45 @@
 'use strict'
+/*
+API
+
+currently:
+
+install plugins
+
+then describe server.
+
+then describe connection.
+
+considered create plugins + describe server in one go,
+but some plugins (i.e. security) might be installed in more than one
+place... we don't want to have to describe each possible client
+combination.
+
+also, some plugins have state (like access to keys)
+that should be set one time.
+
+or maybe we do want to preconfigure the clients and servers
+that are acceptable? we shouldn't we shouldn't just connect via
+any string description we can parse.
+
+ms = MultiServer([
+  server(opts),
+  [server(opts), security(opts), compression(opts)]//...
+])
+
+MultiServer()
+  .useServers([...]) //net~shs; ws~shs; utp~shs; webrtc~shs; tor~shs;
+  .useClients([...])
+  .createServer(function (stream) {...})
+  .connect(string, function (err, stream) {...})
+
+
+ms.combine(server, transform, transform) //etc
+
+hmm, okay so one thing we def need is to take a server chain
+and produce a address string. maybe I should do that next?
+
+*/
 
 
 //create multiple types of server in one go.
