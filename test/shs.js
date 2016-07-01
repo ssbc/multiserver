@@ -21,13 +21,13 @@ function party (id, cb) {
 var serverA = MultiServer([
   Net(),
   Ws(),
-  Shs(alice, app_key, 1000, party)
+  Shs(alice, app_key, 10000, party)
 ])
 
 var serverB = MultiServer([
   Net(),
   Ws(),
-  Shs(bob, app_key, 1000, party)
+  Shs(bob, app_key, 10000, party)
 ])
 
 
