@@ -56,35 +56,6 @@ for non security reasons. servers with stable IP addresses can use TCP, but your
 probably needs . Browser clients don't
 have those options, but they can use webrtc and websockets.
 
----
-
-so we have protocols, like (tcp, ws, tor, utp, webrtc).
-and then we _also_ have security protocols, often,
-these wrap a specific network protocol, which makes them inflexible,
-but really, they could be implemented as duplex transforms,
-https://github.com/auditdrivencrypto/secret-handshake/
-
-you connect to a peer over a raw, then wrap the security layer.
-you could represent this as a composition!
-`net:<host>:<port>|shs:<key>`
-
-remember, these are duplex streams, so `shs` would wrap `net`.
-It may help to think of it like:
-
-`shs(net(<host>:<port>), <key>)`
-
-another example would be to use compression.
-
-`net:<host>:<port>|shs:<key>|gzip`
-
-now we have added compression on the inside of the encryption.
-
-> NOTE: I am still deciding what the syntax for representing addresses are.
-
-## example - server with net and ws
-
-create a server that listens on tcp and websockets,
-then create a client that connects to the websocket interface.
 
 ``` js
 var MultiServer = require('multiserver')
@@ -102,7 +73,7 @@ var close = ms.server(function (stream) {
 
 //connect to a protocol. uses whichever
 //handler understands the address (in this case, websockets)
-ms.connect('ws://localhost:1234', function (err, stream) {
+ms.client('ws://localhost:1234', function (err, stream) {
   //...
 })
 ```
@@ -141,17 +112,17 @@ console.log(ms.stringify())
 //run two servers on two ports.
 //newer peers can connect directly to 4444 and use shs2.
 //this means the protocol can be _completely_ upgraded.
-ms.createServer(function (stream) {
+ms.server(function (stream) {
 
 })
 
 //connect to legacy protocol
-ms.connect('net:<host>:3333~shs:<key>', function (err, stream) {
+ms.client('net:<host>:3333~shs:<key>', function (err, stream) {
   //...
 })
 
 //connect to modern protocol
-ms.connect('net:<host>:4444~shs2:<key>', function (err, stream) {
+ms.client('net:<host>:4444~shs2:<key>', function (err, stream) {
   //...
 })
 
@@ -160,6 +131,7 @@ ms.connect('net:<host>:4444~shs2:<key>', function (err, stream) {
 ## License
 
 MIT
+
 
 
 
