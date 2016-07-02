@@ -10,18 +10,21 @@ module.exports = function (plugs) {
   plugs = plugs.map(function (e) {
     return isArray(e) ? compose(e) : e
   })
-
+  console.log('PLUGS', plugs)
+ 
   return {
     name: plugs.map(function (e) { return e.name }).join(';'),
     client: function (addr, cb) {
       //if(/;/.test(addr))
-      if(!split(addr).find(function (addr) {
+      var plug
+      split(addr).find(function (addr) {
         //connect with the first plug that understands this string.
-        var plug = plugs.find(function (plug) { plug.parse(addr) })
-        if(plug) plug.client(addr, cb)
-        return plug
-      }))
-        cb(new Error('could not connect to one of:'+addr))
+        plug = plugs.find(function (plug) {
+          return plug.parse(addr)
+        })
+      })
+      if(plug) plug.client(addr, cb)
+      else cb(new Error('could not connect to one of:'+addr))
     },
     server: function (onConnect, onError) {
       //start all servers
@@ -48,4 +51,12 @@ module.exports = function (plugs) {
     }
   }
 }
+
+
+
+
+
+
+
+
 
