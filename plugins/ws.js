@@ -8,7 +8,9 @@ module.exports = function (opts) {
     server: function (onConnect) {
       var server = WS.createServer(opts, function (stream) {
         onConnect(stream)
-      }).listen(opts.port)
+      })
+
+      if(!opts.server) server.listen(opts.port)
       return server.close.bind(server)
     },
     client: function (addr, cb) {
