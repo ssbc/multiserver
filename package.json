@@ -9,15 +9,16 @@
   },
   "dependencies": {
     "pull-cat": "~1.1.5",
-    "pull-stream": "~2.26.0",
-    "pull-ws": "~1.1.0",
+    "pull-stream": "^3.4.3",
+    "pull-ws": "^3.0.1",
     "secret-handshake": "^0.4.1",
     "separator-escape": "0.0.0",
     "stream-to-pull-stream": "~1.7.0"
   },
   "devDependencies": {
     "chloride": "^2.1.1",
-    "pull-file": "^0.5.0"
+    "pull-file": "^0.5.0",
+    "tape": "^4.6.0"
   },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
