@@ -33,11 +33,9 @@ module.exports = function (ary) {
 
   function parse (str) {
     var parts = SE.parse(str)
-    console.log('parts', parts)
     var out = []
     for(var i = 0; i < parts.length; i++) {
       var v = ary[i].parse(parts[i])
-      console.log(v)
       if(!v) return null
       out[i] = v
     }
@@ -85,5 +83,4 @@ module.exports = function (ary) {
     }
   }
 }
-
 
