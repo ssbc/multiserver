@@ -10,12 +10,10 @@ module.exports = function (plugs) {
   plugs = plugs.map(function (e) {
     return isArray(e) ? compose(e) : e
   })
-  console.log('PLUGS', plugs)
- 
+
   return {
     name: plugs.map(function (e) { return e.name }).join(';'),
     client: function (addr, cb) {
-      //if(/;/.test(addr))
       var plug
       split(addr).find(function (addr) {
         //connect with the first plug that understands this string.
@@ -51,12 +49,4 @@ module.exports = function (plugs) {
     }
   }
 }
-
-
-
-
-
-
-
-
 
