@@ -14,12 +14,18 @@ var appKey = cl.crypto_hash_sha256(new Buffer('TEST'))
 
 var requested, ts
 
+//this gets overwritten in the last test.
+var check = function (id, cb) {
+  cb(null, true)
+}
+
 var net = Net({port: 4848})
 var ws = Ws({port: 4848})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   requested = id
   ts = Date.now()
-  cb(null, true)
+
+  check(id, cb)
 }})
 
 var combined = Compose([net, shs])
@@ -70,6 +76,7 @@ tape('combined', function (t) {
       pull.values([new Buffer('hello world')]),
       stream,
       pull.collect(function (err, ary) {
+        if(err) throw err
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
         t.end()
         close()
@@ -109,4 +116,37 @@ tape('error if try to connect on wrong protocol', function (t) {
     t.end()
   })
 })
+
+tape('shs with seed', function (t) {
+
+  var close = combined.server(echo)
+
+  var seed = cl.crypto_hash_sha256(new Buffer('TEST SEED'))
+  var bob = cl.crypto_sign_seed_keypair(seed)
+
+  var checked
+  check = function (id, cb) {
+    console.log("REQUEST AUTH", id)
+    checked = id
+    if(id.toString('base64') === bob.publicKey.toString('base64'))
+      cb(null, true)
+    else
+      cb(null, false)
+  }
+
+  var addr_with_seed = combined.stringify()+':'+seed.toString('base64')
+
+  console.log(addr_with_seed)
+
+  combined.client(addr_with_seed, function (err, stream) {
+    t.notOk(err)
+    t.deepEqual(checked, bob.publicKey)
+    t.end()
+    stream.source(true, function () {})
+    close()
+  })
+
+})
+
+
 
