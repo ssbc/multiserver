@@ -3,7 +3,7 @@ var URL = require('url')
 
 module.exports = function (opts) {
   opts = opts || {}
-  opts.binaryType = opts.binaryType: 'arraybuffer')
+  opts.binaryType = (opts.binaryType || 'arraybuffer')
   return {
     name: 'ws',
     server: function (onConnect) {
