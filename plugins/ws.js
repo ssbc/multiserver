@@ -2,7 +2,8 @@ var WS = require('pull-ws')
 var URL = require('url')
 
 module.exports = function (opts) {
-
+  opts = opts || {}
+  opts.binaryType = opts.binaryType: 'arraybuffer')
   return {
     name: 'ws',
     server: function (onConnect) {
@@ -20,9 +21,12 @@ module.exports = function (opts) {
         addr = URL.format(addr)
       }
 
-      var stream = WS.connect(addr, {onConnect: function (err) {
-        cb(err, stream)
-      }})
+      var stream = WS.connect(addr, {
+        binaryType: opts.binaryType,
+        onConnect: function (err) {
+          cb(err, stream)
+        }
+      })
     },
     stringify: function () {
       return URL.format({
@@ -39,6 +43,7 @@ module.exports = function (opts) {
     }
   }
 }
+
 
 
 
