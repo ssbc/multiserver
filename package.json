@@ -23,6 +23,9 @@
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
   },
+  "browser": {
+    "ws": false
+  },
   "author": "'Dominic Tarr' <dominic.tarr@gmail.com> (dominictarr.com)",
   "license": "MIT"
 }
