@@ -30,13 +30,13 @@ module.exports = function (opts) {
     //MUST be net:<host>:<port>
     parse: function (s) {
       var ary = s.split(':')
-      if(ary.length !== 3) return null
+      if(ary.length < 3) return null
       if('net' !== ary.shift()) return null
       var port = +ary.pop()
       if(isNaN(port)) return null
       return {
         name: 'net',
-        host: ary.shift() || 'localhost',
+        host: ary.join(':') || 'localhost',
         port: port
       }
     },
