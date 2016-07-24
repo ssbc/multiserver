@@ -85,6 +85,28 @@ tape('combined', function (t) {
   })
 })
 
+
+tape('combined, ipv6', function (t) {
+  var close = combined.server(echo)
+
+  var addr = combined.stringify().replace('localhost', '::1')
+
+  combined.client(addr, function (err, stream) {
+    if(err) throw err
+    pull(
+      pull.values([new Buffer('hello world')]),
+      stream,
+      pull.collect(function (err, ary) {
+        if(err) throw err
+        t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+        t.end()
+        close()
+      })
+    )
+  })
+})
+
+
 tape('ws with combined', function (t) {
   var close = combined_ws.server(echo)
 
@@ -147,6 +169,7 @@ tape('shs with seed', function (t) {
   })
 
 })
+
 
 
 
