@@ -170,6 +170,27 @@ tape('shs with seed', function (t) {
 
 })
 
+tape('ws default port', function (t) {
+  var ws = Ws({
+    host: 'domain.de',
+    server: {
+      key: null,
+      address: function () { return {port: 80}}
+    }})
+  t.equal(ws.stringify(), 'ws://domain.de')
+  t.end()
+})
 
+
+tape('wss default port', function (t) {
+  var ws = Ws({
+    host: 'domain.de',
+    server: {
+      key: true,
+      address: function () { return {port: 443}}
+    }})
+  t.equal(ws.stringify(), 'wss://domain.de')
+  t.end()
+})
 
 
