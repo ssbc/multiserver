@@ -40,11 +40,5 @@ module.exports = function (opts) {
       return 'shs:'+opts.keys.publicKey.toString('base64')
     }
   }
-
 }
-
-
-
-
-
 
