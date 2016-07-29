@@ -4,6 +4,7 @@ var URL = require('url')
 module.exports = function (opts) {
   opts = opts || {}
   opts.binaryType = (opts.binaryType || 'arraybuffer')
+  var secure = opts.server && !!opts.server.key
   return {
     name: 'ws',
     server: function (onConnect) {
@@ -20,6 +21,8 @@ module.exports = function (opts) {
         addr.slashes = true
         addr = URL.format(addr)
       }
+      if('string' !== typeof addr)
+        addr = URL.format(addr)
 
       var stream = WS.connect(addr, {
         binaryType: opts.binaryType,
@@ -29,11 +32,17 @@ module.exports = function (opts) {
       })
     },
     stringify: function () {
+      var port
+      if(opts.server)
+        port = opts.server.address().port
+      else
+        port = opts.port
+
       return URL.format({
-        protocol: 'ws',
+        protocol: secure ? 'wss' : 'ws',
         slashes: true,
         hostname: opts.host || 'localhost', //detect ip address
-        port: opts.port
+        port: (secure ? port == 443 : port == 80) ? undefined : port
       })
     },
     parse: function (str) {
@@ -43,14 +52,6 @@ module.exports = function (opts) {
     }
   }
 }
-
-
-
-
-
-
-
-
 
 
 
