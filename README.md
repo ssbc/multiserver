@@ -3,6 +3,59 @@
 A single interface that can work with multiple protocols,
 and multilpe transforms of those protocols (eg, security layer)
 
+## address format
+
+addresses describe everything needed to connect to a peer.
+each address is divided into protocol sections separated by `~`.
+Each protocol section is divided itself by `:`. a protocol section
+starts with a name for that protocol, and then whatever arguments
+that protocol needs.
+
+for example, the address for my ssb pubserver is
+```
+net:wx.larpa.net:8008~shs:DTNmX+4SjsgZ7xyDh5xxmNtFqa6pWi5Qtw7cE8aR9TQ=
+```
+that says use the `net` protocol (tcp) to connect to the domain `wx.larpa.net`
+on port `8008`, and then encrypt the session using `shs` ([secret-handshake](https://github.com/auditdrivencrypto/secret-handshake))
+to the public key `DTNmX+4SjsgZ7xyDh5xxmNtFqa6pWi5Qtw7cE8aR9TQ=`.
+
+Usually, the first section is a network protocol, and the rest are transforms,
+such as encryption or compression.
+
+multiserver makes it easy to use multiple protocols at once. for example,
+my pub server _also_ supports shs over websockets.
+
+so this is another way to connect:
+```
+wss://wx.larpa.net~shs:DTNmX+4SjsgZ7xyDh5xxmNtFqa6pWi5Qtw7cE8aR9TQ=
+```
+
+### net
+
+tcp is `net:{host}:{port}` port is not optional.
+
+### ws
+
+web sockets is `ws://{host}:{port}?` port defaults to 80 if not provided.
+
+web sockets over https is `wss://{host}:{port}?` where port is
+443 if not provided.
+
+### shs
+
+secret-handshake is `shs:{public_key}:{seed}?`. `seed` is used to create
+a one-time shared private key, that may enable a special access.
+for example, you'll see that ssb invite codes have shs with two sections
+following. Normally, only a single argument (the remote public key) is necessary.
+
+### TODO
+
+a short list of other protocols which could be implemented:
+
+* tor
+* cjdns
+* other encryption protocols...
+
 ## motivation
 
 developing a p2p system is hard. especially hard is upgrading protocol layers.
@@ -131,6 +184,11 @@ ms.client('net:<host>:4444~shs2:<key>', function (err, stream) {
 ## License
 
 MIT
+
+
+
+
+
 
 
 
