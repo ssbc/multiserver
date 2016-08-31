@@ -1,4 +1,8 @@
-var net = require('net')
+var net
+try {
+  net = require('net')
+} catch (_) {}
+
 var toPull = require('stream-to-pull-stream')
 
 module.exports = function (opts) {
@@ -29,6 +33,7 @@ module.exports = function (opts) {
     },
     //MUST be net:<host>:<port>
     parse: function (s) {
+      if(!net) return null
       var ary = s.split(':')
       if(ary.length < 3) return null
       if('net' !== ary.shift()) return null
