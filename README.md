@@ -41,6 +41,10 @@ web sockets is `ws://{host}:{port}?` port defaults to 80 if not provided.
 web sockets over https is `wss://{host}:{port}?` where port is
 443 if not provided.
 
+### onion
+
+Connect over tor using local proxy (9050). onion is `onion:{host}:{port}` port is not optional.
+
 ### shs
 
 secret-handshake is `shs:{public_key}:{seed}?`. `seed` is used to create
@@ -52,7 +56,6 @@ following. Normally, only a single argument (the remote public key) is necessary
 
 a short list of other protocols which could be implemented:
 
-* tor
 * cjdns
 * other encryption protocols...
 

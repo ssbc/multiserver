@@ -1,7 +1,7 @@
 {
   "name": "multiserver",
   "description": "",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "homepage": "https://github.com/dominictarr/multiserver",
   "repository": {
     "type": "git",
@@ -13,7 +13,8 @@
     "pull-ws": "^3.2.2",
     "secret-handshake": "^1.0.0",
     "separator-escape": "0.0.0",
-    "stream-to-pull-stream": "~1.7.0"
+    "stream-to-pull-stream": "~1.7.0",
+    "tproxy": "0.0.3"
   },
   "devDependencies": {
     "chloride": "^2.1.1",
