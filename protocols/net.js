@@ -4,12 +4,12 @@ var toPull = require('stream-to-pull-stream')
 module.exports = function () {
   return {
     protocol: 'net',
-    createServer: function (host, onConnection) {
+    createServer: function (port, onConnection) {
       var server = net.createServer({allowHalfOpen: true},
       function (stream) {
         stream.allowHalfDuplex = true
         onConnection(toPull.duplex(stream))
-      }).listen(host)
+      }).listen(port)
       return function (cb) {
         server.close(cb)
       }
