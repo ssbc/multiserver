@@ -117,8 +117,8 @@ have those options, but they can use webrtc and websockets.
 var MultiServer = require('multiserver')
 
 var ms = MultiServer([
-  require('multiserver/plugs/net')({port: 1234}),
-  require('multiserver/plugs/ws')({port: 2345})
+  require('multiserver/plugins/net')({port: 1234}),
+  require('multiserver/plugins/ws')({port: 2345})
 ])
 
 //start a server (for both protocols!)
@@ -143,7 +143,7 @@ versions in parallel. later, they can close down the old api.
 var MultiServer = require('multiserver')
 var ms = MultiServer([
   [ //net + secret-handshake
-    require('multiserver/plugs/net')({port: 3333}),
+    require('multiserver/plugins/net')({port: 3333}),
     require('secret-handshake-multiserver')({
       keys: //keypair
       appKey: //application key
@@ -152,7 +152,7 @@ var ms = MultiServer([
   ],
   [ //net + secret-handshake2
     //(not implemented yet, but incompatible with shs)
-    require('multiserver/plugs/net')({port: 4444}),
+    require('multiserver/plugins/net')({port: 4444}),
     require('secret-handshake2-multiserver')({
       keys: //keypair
       appKey: //application key
