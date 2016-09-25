@@ -3,7 +3,7 @@ var pull = require('pull-stream')
 
 module.exports = function (opts) {
   var server = SHS.createServer(
-    opts.keys, opts.auth, opts.appKey, opts.timeout
+    opts.keys, opts.auth || opts.authenticate, opts.appKey, opts.timeout
   )
   var client = SHS.createClient(
     opts.keys, opts.appKey, opts.timeout
@@ -41,4 +41,5 @@ module.exports = function (opts) {
     }
   }
 }
+
 
