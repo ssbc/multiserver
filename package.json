@@ -14,7 +14,7 @@
     "secret-handshake": "^1.0.0",
     "separator-escape": "0.0.0",
     "stream-to-pull-stream": "~1.7.0",
-    "tproxy": "0.0.3"
+    "socks": "1.1.9"
   },
   "devDependencies": {
     "chloride": "^2.1.1",

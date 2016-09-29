@@ -1,42 +1,82 @@
-var net
-try {
-  net = require('net')
-} catch (_) {}
-
-var proxy = require('tproxy')
+var socks = require('socks');
 var toPull = require('stream-to-pull-stream')
 
+var options = {
+    proxy: {
+        ipaddress: "localhost",
+        port: 9050, // default tor port
+        type: 5
+    },
+}
+
 module.exports = function (opts) {
-  opts.allowHalfOpen = opts.allowHalfOpen !== false
   return {
     name: 'onion',
-    server: function (onConnection) {
-      var server = net.createServer(opts, function (stream) {
-        var proxyStream = proxy(stream, { port: 9050 }) // tor default
-        onConnection(proxyStream = toPull.duplex(proxyStream))
-      }).listen(opts)
-      return function () {
-        server.close()
-      }
+      server: function (onConnection) {
+          var serverOpts = {
+              proxy: options.proxy,
+              command: "bind",
+              target: {
+                  host: opts.host,
+                  port: opts.port
+              }
+          }
+          var controlSocket
+          socks.createConnection(serverOpts, function (err, socket) {
+              controlSocket = socket
+
+              socket.on('data', function(data) {
+                  onConnection(data = toPull.duplex(data))
+              })
+
+              // Remember to resume the socket stream.
+              socket.resume()
+          })
+          return function () {
+              controlSocket.end()
+          }
     },
     client: function (opts, cb) {
-      var started = false
-      var stream = net.connect(opts)
-      stream = proxy(stream, { port: 9050 }) // tor default
-        .on('connect', function () {
-          if(started) return
-          started = true
-          cb(null, toPull.duplex(stream))
-        })
-        .on('error', function (err) {
-          if(started) return
-          started = true
-          cb(err)
+        var started = false
+
+        var connectOpts = {
+            proxy: {
+                ipaddress: "localhost",
+                port: 9050, // default tor port
+                type: 5
+            },
+            command: "connect",
+            target: {
+                host: opts.host,
+                port: opts.port
+            }
+        }
+
+        console.log(connectOpts);
+
+        socks.createConnection(connectOpts, function(err, socket) {
+            console.log("got socket err", err);
+            console.log("got socket");
+            if (err) return
+
+            cb(null, toPull.duplex(socket))
+
+            socket.on('error', function (err) {
+                console.log("error");
+                cb(err)
+            })
+
+            socket.on('data', function (err) {
+                console.log("data");
+            })
+
+            console.log("resume");
+            // Remember to resume the socket stream.
+            socket.resume()
         })
     },
     //MUST be onion:<host>:<port>
     parse: function (s) {
-      if(!net) return null
       var ary = s.split(':')
       if(ary.length < 3) return null
       if('onion' !== ary.shift()) return null
