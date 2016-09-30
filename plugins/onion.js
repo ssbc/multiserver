@@ -21,7 +21,7 @@ module.exports = function (opts) {
                   port: opts.port
               }
           }
-          var controlSocket
+          var controlSocket = null
           socks.createConnection(serverOpts, function (err, socket) {
               controlSocket = socket
 
@@ -33,7 +33,8 @@ module.exports = function (opts) {
               socket.resume()
           })
           return function () {
-              controlSocket.end()
+              if (controlSocket != null)
+                  controlSocket.end()
           }
     },
     client: function (opts, cb) {
@@ -52,25 +53,15 @@ module.exports = function (opts) {
             }
         }
 
-        console.log(connectOpts);
-
         socks.createConnection(connectOpts, function(err, socket) {
-            console.log("got socket err", err);
-            console.log("got socket");
             if (err) return
 
             cb(null, toPull.duplex(socket))
 
             socket.on('error', function (err) {
-                console.log("error");
                 cb(err)
             })
 
-            socket.on('data', function (err) {
-                console.log("data");
-            })
-
-            console.log("resume");
             // Remember to resume the socket stream.
             socket.resume()
         })
