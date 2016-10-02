@@ -56,7 +56,7 @@ module.exports = function (opts) {
         socks.createConnection(connectOpts, function(err, socket) {
             if (err) return cb(err)
 
-\            cb(null, toPull.duplex(socket))
+            cb(null, toPull.duplex(socket))
 
             // Remember to resume the socket stream.
             socket.resume()
