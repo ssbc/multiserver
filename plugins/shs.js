@@ -38,9 +38,10 @@ module.exports = function (opts) {
       return {key: key, seed: seed}
     },
     stringify: function () {
+      if(!keys) return
       return 'shs:'+keys.publicKey.toString('base64')
     },
-    publicKey: keys.publicKey
+    publicKey: keys && keys.publicKey
   }
 }
 
