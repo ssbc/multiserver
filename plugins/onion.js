@@ -1,20 +1,19 @@
 var socks = require('socks');
 var toPull = require('stream-to-pull-stream')
 
-var options = {
-    proxy: {
-        ipaddress: "localhost",
-        port: 9050, // default tor port
-        type: 5
-    },
-}
-
 module.exports = function (opts) {
+  opts = opts || {}
+  var proxyOpts = {
+      ipaddress: "localhost",
+      //TODO: tor port should be configurable.
+      port: 9050, // default tor port
+      type: 5
+  }
   return {
     name: 'onion',
       server: function (onConnection) {
           var serverOpts = {
-              proxy: options.proxy,
+              proxy: proxyOpts,
               command: "bind",
               target: {
                   host: opts.host,
@@ -23,6 +22,11 @@ module.exports = function (opts) {
           }
           var controlSocket = null
           socks.createConnection(serverOpts, function (err, socket) {
+              if(err) {
+                console.error('unable to find local tor server.')
+                console.error('will be able receive tor connections')
+                return
+              }
               controlSocket = socket
 
               socket.on('data', function(data) {
@@ -41,11 +45,7 @@ module.exports = function (opts) {
         var started = false
 
         var connectOpts = {
-            proxy: {
-                ipaddress: "localhost",
-                port: 9050, // default tor port
-                type: 5
-            },
+            proxy: proxyOpts,
             command: "connect",
             target: {
                 host: opts.host,
@@ -54,13 +54,9 @@ module.exports = function (opts) {
         }
 
         socks.createConnection(connectOpts, function(err, socket) {
-            if (err) return
+            if (err) return cb(err)
 
-            cb(null, toPull.duplex(socket))
-
-            socket.on('error', function (err) {
-                cb(err)
-            })
+\            cb(null, toPull.duplex(socket))
 
             // Remember to resume the socket stream.
             socket.resume()
@@ -84,3 +80,4 @@ module.exports = function (opts) {
     }
   }
 }
+
