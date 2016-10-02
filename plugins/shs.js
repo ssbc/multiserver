@@ -2,11 +2,12 @@ var SHS = require('secret-handshake')
 var pull = require('pull-stream')
 
 module.exports = function (opts) {
+  var keys = SHS.toKeys(opts.keys || opts.seed)
   var server = SHS.createServer(
-    opts.keys, opts.auth || opts.authenticate, opts.appKey, opts.timeout
+    keys, opts.auth || opts.authenticate, opts.appKey, opts.timeout
   )
   var client = SHS.createClient(
-    opts.keys, opts.appKey, opts.timeout
+    keys, opts.appKey, opts.timeout
   )
 
   return {
@@ -37,9 +38,12 @@ module.exports = function (opts) {
       return {key: key, seed: seed}
     },
     stringify: function () {
-      return 'shs:'+opts.keys.publicKey.toString('base64')
-    }
+      return 'shs:'+keys.publicKey.toString('base64')
+    },
+    publicKey: keys.publicKey
   }
 }
+
+
 
 
