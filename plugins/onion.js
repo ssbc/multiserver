@@ -12,6 +12,8 @@ module.exports = function (opts) {
   return {
     name: 'onion',
       server: function (onConnection) {
+          if(!opts.server) return
+
           var serverOpts = {
               proxy: proxyOpts,
               command: "bind",
