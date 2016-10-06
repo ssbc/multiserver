@@ -11,7 +11,7 @@ module.exports = function (opts) {
   }
   return {
     name: 'onion',
-      server: function (onConnection) {
+    server: function (onConnection) {
           if(!opts.server) return
 
           var serverOpts = {
@@ -78,8 +78,13 @@ module.exports = function (opts) {
       }
     },
     stringify: function () {
-      return ['onion', opts.host || 'localhost', opts.port].join(':')
+      if(opts && !opts.server) return
+      return ['onion', opts.host, opts.port].join(':')
     }
   }
 }
+
+
+
+
 
