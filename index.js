@@ -28,7 +28,7 @@ module.exports = function (plugs) {
       //start all servers
       var closes = plugs.map(function (plug) {
         return plug.server(onConnect, onError)
-      })
+      }).filter(Boolean)
 
       return function () {
         closes.forEach(function (close) { close() })
@@ -37,16 +37,16 @@ module.exports = function (plugs) {
     stringify: function () {
       return plugs.map(function (plug) {
         return plug.stringify()
-      }).join(';')
+      }).filter(Boolean).join(';')
     },
     //parse doesn't really make sense here...
     //like, what if you only have a partial match?
     //maybe just parse the ones you understand?
     parse: function (str) {
       return str.split(';').map(function (e, i) {
+        console.log(e, i)
         return plugs[i].parse(e)
       })
     }
   }
 }
-

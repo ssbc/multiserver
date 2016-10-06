@@ -77,9 +77,14 @@ module.exports = function (ary) {
     },
     parse: parse,
     stringify: function () {
-      return SE.stringify(ary.map(function (e) {
-        return e.stringify()
-      }))
+      var none
+      var _ary = ary.map(function (e) {
+        var v = e.stringify()
+        if(!v) none = true
+        else return v
+      })
+      if(none) return
+      return SE.stringify(_ary)
     }
   }
 }
