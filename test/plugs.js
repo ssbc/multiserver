@@ -6,6 +6,8 @@ var Compose = require('../compose')
 var Net = require('../plugins/net')
 var Ws = require('../plugins/ws')
 var Shs = require('../plugins/shs')
+var Onion = require('../plugins/onion')
+var MultiServer = require('../')
 
 var cl = require('chloride')
 var seed = cl.crypto_hash_sha256(new Buffer('TESTSEED'))
@@ -148,7 +150,6 @@ tape('shs with seed', function (t) {
 
   var checked
   check = function (id, cb) {
-    console.log("REQUEST AUTH", id)
     checked = id
     if(id.toString('base64') === bob.publicKey.toString('base64'))
       cb(null, true)
@@ -157,8 +158,6 @@ tape('shs with seed', function (t) {
   }
 
   var addr_with_seed = combined.stringify()+':'+seed.toString('base64')
-
-  console.log(addr_with_seed)
 
   combined.client(addr_with_seed, function (err, stream) {
     t.notOk(err)
@@ -191,6 +190,47 @@ tape('wss default port', function (t) {
     }})
   t.equal(ws.stringify(), 'wss://domain.de')
   t.end()
+})
+
+
+var onion = Onion({server:false})
+
+tape('onion plug, server false', function (t) {
+
+  t.notOk(onion.stringify(), null)
+  t.deepEqual(
+    onion.parse('onion:3234j5sv346bpih2.onion:2349'),
+    {
+      name: 'onion',
+      host: '3234j5sv346bpih2.onion',
+      port: 2349
+    }
+  )
+
+  var oshs = Compose([onion, shs])
+
+  //should not return an address, since onion is server: false
+  t.notOk(oshs.stringify())
+
+  t.end()
+
+})
+
+tape('use server and non server and close it', function (t) {
+
+  var ms = MultiServer([
+    [net, shs],
+    [onion, shs]
+  ])
+
+  var close = ms.server()
+
+  t.equal(ms.stringify(), combined.stringify())
+
+  close()
+
+  t.end()
+
 })
 
 
