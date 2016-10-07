@@ -12,7 +12,7 @@ module.exports = function (opts) {
     server: function (onConnection) {
       var server = net.createServer(opts, function (stream) {
         onConnection(stream = toPull.duplex(stream))
-      }).listen(opts)
+      }).listen(opts.port)
       return function () {
         server.close()
       }
