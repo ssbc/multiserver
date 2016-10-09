@@ -9,6 +9,7 @@ module.exports = function (opts) {
   return {
     name: 'ws',
     server: function (onConnect) {
+      if(!WS.createServer) return
       var server = WS.createServer(opts, function (stream) {
         onConnect(stream)
       })
@@ -35,6 +36,7 @@ module.exports = function (opts) {
       })
     },
     stringify: function () {
+      if(!WS.createServer) return
       var port
       if(opts.server)
         port = opts.server.address().port
@@ -55,6 +57,7 @@ module.exports = function (opts) {
     }
   }
 }
+
 
 
 
