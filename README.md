@@ -1,67 +1,67 @@
 # multiserver
 
 A single interface that can work with multiple protocols,
-and multilpe transforms of those protocols (eg, security layer)
+and multiple transforms of those protocols (eg, security layer)
 
 ## address format
 
-addresses describe everything needed to connect to a peer.
+Addresses describe everything needed to connect to a peer.
 each address is divided into protocol sections separated by `~`.
-Each protocol section is divided itself by `:`. a protocol section
+Each protocol section is divided itself by `:`. A protocol section
 starts with a name for that protocol, and then whatever arguments
 that protocol needs.
 
-for example, the address for my ssb pubserver is
+For example, the address for my ssb pubserver is:
 ```
 net:wx.larpa.net:8008~shs:DTNmX+4SjsgZ7xyDh5xxmNtFqa6pWi5Qtw7cE8aR9TQ=
 ```
-that says use the `net` protocol (tcp) to connect to the domain `wx.larpa.net`
+That says use the `net` protocol (TCP) to connect to the domain `wx.larpa.net`
 on port `8008`, and then encrypt the session using `shs` ([secret-handshake](https://github.com/auditdrivencrypto/secret-handshake))
 to the public key `DTNmX+4SjsgZ7xyDh5xxmNtFqa6pWi5Qtw7cE8aR9TQ=`.
 
 Usually, the first section is a network protocol, and the rest are transforms,
 such as encryption or compression.
 
-multiserver makes it easy to use multiple protocols at once. for example,
-my pub server _also_ supports shs over websockets.
+Multiserver makes it easy to use multiple protocols at once. For example,
+my pub server _also_ supports `shs` over websockets.
 
-so this is another way to connect:
+So, this is another way to connect:
 ```
 wss://wx.larpa.net~shs:DTNmX+4SjsgZ7xyDh5xxmNtFqa6pWi5Qtw7cE8aR9TQ=
 ```
 
 ### net
 
-tcp is `net:{host}:{port}` port is not optional.
+TCP is `net:{host}:{port}` port is not optional.
 
 ### ws
 
-web sockets is `ws://{host}:{port}?` port defaults to 80 if not provided.
+WebSockets is `ws://{host}:{port}?` port defaults to 80 if not provided.
 
-web sockets over https is `wss://{host}:{port}?` where port is
+WebSockets over https is `wss://{host}:{port}?` where port is
 443 if not provided.
 
 ### onion
 
-Connect over tor using local proxy (9050). onion is `onion:{host}:{port}` port is not optional.
+Connect over tor using local proxy (9050). Onion is `onion:{host}:{port}` port is not optional.
 
 ### shs
 
-secret-handshake is `shs:{public_key}:{seed}?`. `seed` is used to create
+Secret-handshake is `shs:{public_key}:{seed}?`. `seed` is used to create
 a one-time shared private key, that may enable a special access.
-for example, you'll see that ssb invite codes have shs with two sections
+For example, you'll see that ssb invite codes have shs with two sections
 following. Normally, only a single argument (the remote public key) is necessary.
 
 ### TODO
 
-a short list of other protocols which could be implemented:
+A short list of other protocols which could be implemented:
 
 * cjdns
 * other encryption protocols...
 
 ## motivation
 
-developing a p2p system is hard. especially hard is upgrading protocol layers.
+Developing a p2p system is hard. especially hard is upgrading protocol layers.
 The contemporary approach is to [update code via a backdoor](https://whispersystems.org/blog/the-ecosystem-is-moving/),
 but as easily as security can be added, it can be taken away. We need an approach
 to upgrading that is itself decentralized, and also does not accumulate legacy baggage.
@@ -69,23 +69,23 @@ after upgrading past a version of the protocol, the system should be able to dis
 without a trace.
 
 Traditionally, protocol versions are upgraded by negioating the version used in a handshake.
-But how do you upgrade the handshake? you can't. This also tends to accumulate legacy, because
+But, how do you upgrade the handshake? You can't. This also tends to accumulate legacy, because
 you never know if you'll meet an old peer.
 
-Some http apis provide upgradability a better, simpler way.
-by putting a version number within the url. A new version of
-the api can then be used without touching the old one at all.
+Some HTTP APIs provide upgradability a better, simpler way.
+By putting a version number within the url. A new version of
+the API can then be used without touching the old one at all.
 
 I propose to adapt this approach to lower level protocols.
 Do not negioate versions/ciphersuits in the handshake.
-instead, run multiple protocols at once, and "lookup" which
+Instead, run multiple protocols at once, and "lookup" which
 versions a peer supports currently. Most p2p systems have
 some sort of lookup system to find peers _anyway_
 (might be DHT, a tracker server, or gossip),
 just put version information in there.
 
-There are two main situations where I expect this to be useful,
-upgrading ciphers, and bridging across enviroments that are
+There are two main situations where I expect this to be useful:
+upgrading ciphers and bridging across enviroments that are
 otherwise cannot talk to each other (web browser to desktop)
 
 ### upgrade
@@ -99,19 +99,13 @@ Once most peers have upgraded to strong, support for *weak* can be discontinued.
 
 ### bridging
 
-regular servers can do tcp. desktop clients can speak tcp,
-but can't create tcp servers reliably. browsers can
-use websockets and webrtc. webrtc gives you p2p, but
-needs an introducer. another option is [utp](https://github.com/mafintosh/utp-native)
+Regular servers can do TCP. Desktop clients can speak TCP,
+but can't create TCP servers reliably. Browsers can
+use WebSockets and WebRTC. WebRTC gives you p2p, but
+needs an introducer. Another option is [utp](https://github.com/mafintosh/utp-native)
 - probably the most convienent, because it doesn't need an introducer
 on _every connection_ (but it does require some bootstrapping),
 but that doesn't work in the browser either.
-
-Also, other times, there are different types of peers that may prefer different protocols
-for non security reasons. servers with stable IP addresses can use TCP, but your laptop
-probably needs . Browser clients don't
-have those options, but they can use webrtc and websockets.
-
 
 ``` js
 var MultiServer = require('multiserver')
@@ -136,9 +130,9 @@ ms.client('ws://localhost:1234', function (err, stream) {
 
 ### example - server with two security protocols
 
-This is just how some services (eg, github) have an api version
+This is just how some services (eg, github) have an API version
 in their URL scheme. It is now easy to use two different
-versions in parallel. later, they can close down the old api.
+versions in parallel. later, they can close down the old API.
 ``` js
 var MultiServer = require('multiserver')
 var ms = MultiServer([
