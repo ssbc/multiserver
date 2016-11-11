@@ -1,7 +1,7 @@
 {
   "name": "multiserver",
   "description": "",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "homepage": "https://github.com/dominictarr/multiserver",
   "repository": {
     "type": "git",
@@ -32,5 +32,3 @@
   "author": "'Dominic Tarr' <dominic.tarr@gmail.com> (dominictarr.com)",
   "license": "MIT"
 }
-
-
