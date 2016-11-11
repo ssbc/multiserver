@@ -26,8 +26,11 @@
   },
   "browser": {
     "ws": false,
-    "pull-ws/server": false
+    "pull-ws/server": false,
+    "socks": false
   },
   "author": "'Dominic Tarr' <dominic.tarr@gmail.com> (dominictarr.com)",
   "license": "MIT"
 }
+
+

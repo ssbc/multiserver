@@ -2,6 +2,8 @@ var socks = require('socks');
 var toPull = require('stream-to-pull-stream')
 
 module.exports = function (opts) {
+  if(!socks) return //we are in browser
+
   opts = opts || {}
   var proxyOpts = {
       ipaddress: "localhost",
