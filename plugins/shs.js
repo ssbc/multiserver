@@ -1,13 +1,19 @@
 var SHS = require('secret-handshake')
 var pull = require('pull-stream')
 
+function isString(s) {
+  return 'string' === typeof s
+}
+
 module.exports = function (opts) {
   var keys = SHS.toKeys(opts.keys || opts.seed)
+  var appKey = isString(opts.appKey) ? new Buffer(opts.appKey, 'base64') : opts.appKey
+
   var server = SHS.createServer(
-    keys, opts.auth || opts.authenticate, opts.appKey, opts.timeout
+    keys, opts.auth || opts.authenticate, appKey, opts.timeout
   )
   var client = SHS.createClient(
-    keys, opts.appKey, opts.timeout
+    keys, appKey, opts.timeout
   )
 
   return {
