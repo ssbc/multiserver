@@ -233,4 +233,62 @@ tape('use server and non server and close it', function (t) {
 
 })
 
+tape('id of stream from server', function (t) {
+  check = function (id, cb) {
+    cb(null, true)
+  }
+  var close = combined.server(function (stream) {
+    var addr = combined.parse(stream.address)
+    t.ok(addr)
+    console.log('address as seen on server', addr)
+    t.equal(addr[0].name, 'net')
+    t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
+
+    pull(stream.source, stream.sink) //echo
+  }, function (err) {
+    if(err) throw err
+  })
+
+  combined.client(combined.stringify(), function (err, stream) {
+    if(err) throw err
+    var addr = combined.parse(stream.address)
+    t.equal(addr[0].name, 'net')
+    t.equal(addr[0].port, 4848)
+    t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
+    stream.source(true, function () {
+      close()
+      t.end()
+    })
+  })
+})
+
+
+tape('error should have client address on it', function (t) {
+
+  check = function (id, cb) {
+    throw new Error('should never happen')
+  }
+  var close = combined.server(function (stream) {
+    throw new Error('should never happen')
+  }, function (err) {
+    console.log(err)
+    var addr = err.address
+    t.ok(/^net\:/.test(err.address))
+    t.ok(/\~shs\:/.test(err.address))
+    //the shs address won't actually parse, because it doesn't have the key in it
+    //because the key is not known in a wrong number.
+    t.end()
+    close()
+  })
+
+  //very unlikely this is the address, which will give a wrong number at the server.
+  var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
+
+  combined.client(addr, function (err, stream) {
+    //client should see client auth rejected
+    t.ok(err)
+    close()
+  })
+
+})
 
