@@ -60,7 +60,10 @@ module.exports = function (opts) {
         socks.createConnection(connectOpts, function(err, socket) {
             if (err) return cb(err)
 
-            cb(null, toPull.duplex(socket))
+            var duplexStream = toPull.duplex(socket)
+            duplexStream.address = 'onion:'+connectOpts.target.host+':'+connectOpts.target.port
+
+            cb(null, duplexStream)
 
             // Remember to resume the socket stream.
             socket.resume()
@@ -85,8 +88,5 @@ module.exports = function (opts) {
     }
   }
 }
-
-
-
 
 
