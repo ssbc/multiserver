@@ -20,9 +20,19 @@ module.exports = function (opts) {
     name: 'shs',
     create: function (_opts) {
       return function (stream, cb) {
+        function _cb (err, stream) {
+          if(err) {
+            //shs is designed so that we do not _know_ who is connecting if it fails,
+            //so we probably can't add the connecting address. (unless it was client unauthorized)
+            err.address = 'shs:'
+            return cb(err)
+          }
+          stream.address = 'shs:'+stream.remote.toString('base64')
+          cb(null, stream)
+        }
         pull(
           stream.source,
-          _opts && _opts.key ? client(_opts.key, _opts.seed, cb) : server(cb),
+          _opts && _opts.key ? client(_opts.key, _opts.seed, _cb) : server(_cb),
           stream.sink
         )
       }
@@ -50,6 +60,7 @@ module.exports = function (opts) {
     publicKey: keys && keys.publicKey
   }
 }
+
 
 
 

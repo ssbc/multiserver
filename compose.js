@@ -17,14 +17,21 @@ function tail (opts) {
 }
 
 function compose (stream, transforms, cb) {
-  ;(function next (err, stream, i) {
-    if(err) return cb(err)
-    else if(i >= transforms.length) return cb(null, stream)
+  ;(function next (err, stream, i, addr) {
+    if(err) {
+      console.log(addr + '~' + err.address)
+      err.address = addr + '~' + err.address
+      return cb(err)
+    }
+    else if(i >= transforms.length) {
+      stream.address = addr
+      return cb(null, stream)
+    }
     else
       transforms[i](stream, function (err, stream) {
-        next(err, stream, i+1)
+        next(err, stream, i+1, err ? addr : addr+'~'+stream.address)
       })
-  })(null, stream, 0)
+  })(null, stream, 0, stream.address)
 }
 
 module.exports = function (ary) {
@@ -88,4 +95,8 @@ module.exports = function (ary) {
     }
   }
 }
+
+
+
+
 

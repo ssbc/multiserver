@@ -5,13 +5,19 @@ try {
 
 var toPull = require('stream-to-pull-stream')
 
+function toDuplex (str) {
+  var stream = toPull.duplex(str)
+  stream.address = 'net:'+str.remoteAddress+':'+str.remotePort
+  return stream
+}
+
 module.exports = function (opts) {
   opts.allowHalfOpen = opts.allowHalfOpen !== false
   return {
     name: 'net',
     server: function (onConnection) {
       var server = net.createServer(opts, function (stream) {
-        onConnection(stream = toPull.duplex(stream))
+        onConnection(toDuplex(stream))
       }).listen(opts.port)
       return function () {
         server.close()
@@ -23,7 +29,8 @@ module.exports = function (opts) {
         .on('connect', function () {
           if(started) return
           started = true
-          cb(null, toPull.duplex(stream))
+
+          cb(null, toDuplex(stream))
         })
         .on('error', function (err) {
           if(started) return
@@ -50,4 +57,5 @@ module.exports = function (opts) {
     }
   }
 }
+
 
