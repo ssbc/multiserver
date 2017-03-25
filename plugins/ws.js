@@ -11,6 +11,7 @@ module.exports = function (opts) {
     server: function (onConnect) {
       if(!WS.createServer) return
       var server = WS.createServer(opts, function (stream) {
+        stream.address = 'ws:'+stream.remoteAddress + (stream.remotePort ? ':'+stream.remotePort : '')
         onConnect(stream)
       })
 
@@ -34,6 +35,7 @@ module.exports = function (opts) {
           cb(err, stream)
         }
       })
+      stream.address = addr
     },
     stringify: function () {
       if(!WS.createServer) return
