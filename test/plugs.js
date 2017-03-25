@@ -95,6 +95,7 @@ tape('combined, ipv6', function (t) {
 
   combined.client(addr, function (err, stream) {
     if(err) throw err
+    t.ok(stream.address, 'has an address')
     pull(
       pull.values([new Buffer('hello world')]),
       stream,
@@ -110,10 +111,16 @@ tape('combined, ipv6', function (t) {
 
 
 tape('ws with combined', function (t) {
-  var close = combined_ws.server(echo)
+  var close = combined_ws.server(function (stream) {
+    console.log('combined_ws address', stream.address)
+    t.ok(stream.address, 'has an address')
+    echo(stream)
+  })
 
   combined_ws.client(combined_ws.stringify(), function (err, stream) {
     if(err) throw err
+    t.ok(stream.address, 'has an address')
+    console.log('combined_ws address', stream.address)
     var pushable = Pushable()
     pushable.push(new Buffer('hello world'))
     pull(
