@@ -33,8 +33,10 @@ module.exports = function (opts) {
               }
               controlSocket = socket
 
-              socket.on('data', function(data) {
-                  onConnection(data = toPull.duplex(data))
+              socket.on('data', function(stream) {
+                  stream = toPull.duplex(stream)
+                  stream.address = 'onion:'
+                  onConnection(stream)
               })
 
               // Remember to resume the socket stream.
