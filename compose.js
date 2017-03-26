@@ -69,7 +69,8 @@ module.exports = function (ary) {
     },
     server: function (onConnection, onError) {
       onError = onError || function (err) {
-        console.error('server error', err.stack)
+        console.error('server error, from', err.address)
+        console.error(err.stack)
       }
       return proto.server(function (stream) {
         compose(
