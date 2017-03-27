@@ -19,7 +19,6 @@ function tail (opts) {
 function compose (stream, transforms, cb) {
   ;(function next (err, stream, i, addr) {
     if(err) {
-      console.log(addr + '~' + err.address)
       err.address = addr + '~' + err.address
       return cb(err)
     }
