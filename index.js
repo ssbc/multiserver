@@ -5,10 +5,10 @@ function split(str) {
   return isArray(str) ? str : str.split(';')
 }
 
-module.exports = function (plugs) {
+module.exports = function (plugs, wrap) {
 
   plugs = plugs.map(function (e) {
-    return isArray(e) ? compose(e) : e
+    return isArray(e) ? compose(e, wrap) : e
   })
 
   return {
@@ -50,3 +50,4 @@ module.exports = function (plugs) {
     }
   }
 }
+

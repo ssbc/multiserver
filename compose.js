@@ -17,6 +17,7 @@ function tail (opts) {
 }
 
 function compose (stream, transforms, cb) {
+  if(!stream) throw new Error('multiserver.compose: *must* pass stream')
   ;(function next (err, stream, i, addr) {
     if(err) {
       err.address = addr + '~' + err.address
@@ -28,12 +29,14 @@ function compose (stream, transforms, cb) {
     }
     else
       transforms[i](stream, function (err, stream) {
-        next(err, stream, i+1, err ? addr : addr+'~'+stream.address)
+        if(!err && !stream) throw new Error('expected error or stream')
+        next(err, stream, i+1, err ? addr : (addr+'~'+stream.address))
       })
   })(null, stream, 0, stream.address)
 }
 
-module.exports = function (ary) {
+module.exports = function (ary, wrap) {
+  if(!wrap) wrap = function (e) { return e }
   var proto = head(ary)
   var trans = tail(ary)
 
@@ -60,7 +63,7 @@ module.exports = function (ary) {
       proto.client(head(opts), function (err, stream) {
         if(err) return cb(err)
         compose(
-          stream,
+          wrap(stream),
           trans.map(function (tr, i) { return tr.create(opts[i+1]) }),
           cb
         )
@@ -73,7 +76,7 @@ module.exports = function (ary) {
       }
       return proto.server(function (stream) {
         compose(
-          stream,
+          wrap(stream),
           trans.map(function (tr) { return tr.create() }),
           function (err, stream) {
             if(err) onError(err)
@@ -95,8 +98,5 @@ module.exports = function (ary) {
     }
   }
 }
-
-
-
 
 
