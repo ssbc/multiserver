@@ -28,9 +28,10 @@ function compose (stream, transforms, cb) {
       return cb(null, stream)
     }
     else
-      transforms[i](stream, function (err, stream) {
+      transforms[i](stream, function (err, _stream) {
         if(!err && !stream) throw new Error('expected error or stream')
-        next(err, stream, i+1, err ? addr : (addr+'~'+stream.address))
+        if(_stream) _stream.meta = _stream.meta || stream.meta
+        next(err, _stream, i+1, err ? addr : (addr+'~'+_stream.address))
       })
   })(null, stream, 0, stream.address)
 }
@@ -98,5 +99,6 @@ module.exports = function (ary, wrap) {
     }
   }
 }
+
 
 
