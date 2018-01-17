@@ -1,7 +1,7 @@
 {
   "name": "multiserver",
   "description": "write a server which works over many protocols at once, or connect to the same",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "homepage": "https://github.com/dominictarr/multiserver",
   "repository": {
     "type": "git",
