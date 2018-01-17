@@ -1,6 +1,7 @@
 var WS = require('pull-ws')
 var URL = require('url')
 var pull = require('pull-stream/pull')
+var Map = require('pull-stream/throughs/map')
 
 module.exports = function (opts) {
   opts = opts || {}
@@ -31,7 +32,7 @@ module.exports = function (opts) {
         binaryType: opts.binaryType,
         onConnect: function (err) {
           //ensure stream is a stream of node buffers
-          stream.source = pull(stream.source, pull.map(Buffer))
+          stream.source = pull(stream.source, Map(Buffer))
           cb(err, stream)
         }
       })
