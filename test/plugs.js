@@ -269,16 +269,13 @@ tape('id of stream from server', function (t) {
   })
 })
 
-
 tape('error should have client address on it', function (t) {
-
   check = function (id, cb) {
     throw new Error('should never happen')
   }
   var close = combined.server(function (stream) {
     throw new Error('should never happen')
   }, function (err) {
-    console.log(err)
     var addr = err.address
     t.ok(/^net\:/.test(err.address))
     t.ok(/\~shs\:/.test(err.address))
@@ -290,7 +287,6 @@ tape('error should have client address on it', function (t) {
 
   //very unlikely this is the address, which will give a wrong number at the server.
   var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
-
   combined.client(addr, function (err, stream) {
     //client should see client auth rejected
     t.ok(err)
@@ -298,4 +294,24 @@ tape('error should have client address on it', function (t) {
   })
 
 })
+
+function testAbort (name, combined) {
+
+  tape(name+', aborted', function (t) {
+    var close = combined.server(function () {
+      throw new Error('should never happen')
+    })
+
+    var abort = combined.client(combined.stringify(), function (err, stream) {
+      t.ok(err)
+      t.end()
+      close()
+    })
+
+    abort()
+  })
+}
+
+testAbort('combined', combined)
+testAbort('combined.ws', combined_ws)
 
