@@ -37,6 +37,10 @@ module.exports = function (opts) {
         }
       })
       stream.address = addr
+
+      return function () {
+        stream.close(cb)
+      }
     },
     stringify: function () {
       if(!WS.createServer) return
@@ -60,7 +64,4 @@ module.exports = function (opts) {
     }
   }
 }
-
-
-
 

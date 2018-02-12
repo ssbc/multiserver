@@ -61,7 +61,7 @@ module.exports = function (ary, wrap) {
     client: function (_opts, cb) {
       var opts = parseMaybe(_opts)
       if(!opts) return cb(new Error('could not parse address:'+_opts))
-      proto.client(head(opts), function (err, stream) {
+      return proto.client(head(opts), function (err, stream) {
         if(err) return cb(err)
         compose(
           wrap(stream),
@@ -99,6 +99,4 @@ module.exports = function (ary, wrap) {
     }
   }
 }
-
-
 

@@ -28,6 +28,7 @@ module.exports = function (opts) {
             return cb(err)
           }
           stream.address = 'shs:'+stream.remote.toString('base64')
+          console.log('SHS:CONNECT', stream.address)
           cb(null, stream)
         }
         pull(
@@ -60,7 +61,6 @@ module.exports = function (opts) {
     publicKey: keys && keys.publicKey
   }
 }
-
 
 
 

@@ -17,6 +17,7 @@ module.exports = function (opts) {
     name: 'net',
     server: function (onConnection) {
       var server = net.createServer(opts, function (stream) {
+        var addr = stream.address()
         onConnection(toDuplex(stream))
       }).listen(opts.port)
       return function () {
@@ -24,6 +25,7 @@ module.exports = function (opts) {
       }
     },
     client: function (opts, cb) {
+      var addr = 'net:'+opts.host+':'+opts.port
       var started = false
       var stream = net.connect(opts)
         .on('connect', function () {
@@ -37,6 +39,12 @@ module.exports = function (opts) {
           started = true
           cb(err)
         })
+
+      return function () {
+        started = true
+        stream.destroy()
+        cb(new Error('multiserver.net: aborted'))
+      }
     },
     //MUST be net:<host>:<port>
     parse: function (s) {
@@ -57,5 +65,4 @@ module.exports = function (opts) {
     }
   }
 }
-
 

@@ -48,7 +48,7 @@ module.exports = function (opts) {
           }
     },
     client: function (opts, cb) {
-        var started = false
+        var started = false, _socket, destroy
 
         var connectOpts = {
             proxy: proxyOpts,
@@ -62,6 +62,9 @@ module.exports = function (opts) {
         socks.createConnection(connectOpts, function(err, socket) {
             if (err) return cb(err)
 
+            if(destroy) return socket.destroy()
+            _socket = socket
+
             var duplexStream = toPull.duplex(socket)
             duplexStream.address = 'onion:'+connectOpts.target.host+':'+connectOpts.target.port
 
@@ -70,6 +73,10 @@ module.exports = function (opts) {
             // Remember to resume the socket stream.
             socket.resume()
         })
+        return function () {
+          if(_socket) _socket.destroy()
+          else destroy = true
+        }
     },
     //MUST be onion:<host>:<port>
     parse: function (s) {
@@ -90,5 +97,4 @@ module.exports = function (opts) {
     }
   }
 }
-
 
