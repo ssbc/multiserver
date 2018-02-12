@@ -123,9 +123,13 @@ var close = ms.server(function (stream) {
 
 //connect to a protocol. uses whichever
 //handler understands the address (in this case, websockets)
-ms.client('ws://localhost:1234', function (err, stream) {
+var abort = ms.client('ws://localhost:1234', function (err, stream) {
   //...
 })
+
+//at any time abort() can be called to cancel the connection attempt.
+//if it's called after the connection is established, it will
+//abort the stream.
 ```
 
 ### example - server with two security protocols
@@ -181,17 +185,4 @@ ms.client('net:<host>:4444~shs2:<key>', function (err, stream) {
 ## License
 
 MIT
-
-
-
-
-
-
-
-
-
-
-
-
-
 
