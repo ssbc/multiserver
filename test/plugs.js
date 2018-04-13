@@ -56,6 +56,13 @@ tape('parse, stringify', function (t) {
     ws.stringify()+'~'+shs.stringify()
   )
   console.log(Compose([net, shs]).stringify())
+  t.equal(
+    MultiServer([combined, combined_ws]).stringify(),
+
+    [combined.stringify(), combined_ws.stringify()].join(';')
+  )
+
+
   t.end()
 })
 
@@ -223,23 +230,6 @@ tape('onion plug, server false', function (t) {
 
 })
 
-tape('use server and non server and close it', function (t) {
-
-  var ms = MultiServer([
-    [net, shs],
-    [onion, shs]
-  ])
-
-  var close = ms.server()
-
-  t.equal(ms.stringify(), combined.stringify())
-
-  close()
-
-  t.end()
-
-})
-
 tape('id of stream from server', function (t) {
   check = function (id, cb) {
     cb(null, true)
@@ -269,7 +259,28 @@ tape('id of stream from server', function (t) {
   })
 })
 
+function testAbort (name, combined) {
+
+  tape(name+', aborted', function (t) {
+    var close = combined.server(function () {
+      throw new Error('should never happen')
+    })
+
+    var abort = combined.client(combined.stringify(), function (err, stream) {
+      t.ok(err)
+      t.end()
+      close()
+    })
+
+    abort()
+  })
+}
+
+testAbort('combined', combined)
+testAbort('combined.ws', combined_ws)
+
 tape('error should have client address on it', function (t) {
+//  return t.end()
   check = function (id, cb) {
     throw new Error('should never happen')
   }
@@ -294,24 +305,4 @@ tape('error should have client address on it', function (t) {
   })
 
 })
-
-function testAbort (name, combined) {
-
-  tape(name+', aborted', function (t) {
-    var close = combined.server(function () {
-      throw new Error('should never happen')
-    })
-
-    var abort = combined.client(combined.stringify(), function (err, stream) {
-      t.ok(err)
-      t.end()
-      close()
-    })
-
-    abort()
-  })
-}
-
-testAbort('combined', combined)
-testAbort('combined.ws', combined_ws)
 
