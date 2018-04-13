@@ -14,12 +14,12 @@ module.exports = function (plugs, wrap) {
   return {
     name: plugs.map(function (e) { return e.name }).join(';'),
     client: function (addr, cb) {
-      var plug
-        split(addr).find(function (addr) {
+      var addr = split(addr).find(function (addr) {
         //connect with the first plug that understands this string.
         plug = plugs.find(function (plug) {
-          return plug.parse(addr)
+          return plug.parse(addr) ? plug : null
         })
+        if(plug) return addr
       })
       if(plug) plug.client(addr, cb)
       else cb(new Error('could not connect to one of:'+addr))
@@ -49,5 +49,4 @@ module.exports = function (plugs, wrap) {
     }
   }
 }
-
 
