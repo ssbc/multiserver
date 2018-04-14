@@ -26,17 +26,28 @@ Multiserver makes it easy to use multiple protocols at once. For example,
 my pub server _also_ supports `shs` over websockets.
 
 So, this is another way to connect:
+
 ```
 wss://wx.larpa.net~shs:DTNmX+4SjsgZ7xyDh5xxmNtFqa6pWi5Qtw7cE8aR9TQ=
 ```
 
+if your server supports multiple protocols, you can concatenate addresses with `;`
+and multiserver will connect to the first address it understands.
+
+```
+net:wx.larpa.net:8008~shs:DTNmX+4SjsgZ7xyDh5xxmNtFqa6pWi5Qtw7cE8aR9TQ=;wss://wx.larpa.net~shs:DTNmX+4SjsgZ7xyDh5xxmNtFqa6pWi5Qtw7cE8aR9TQ=
+```
+This means use net, or wss. In some contexts, you might have a peer that understands
+websockets but not net (for example a browser), as long as a server speaks at least
+one protocol that a peer can understand, then they can communicate.
+
 ### net
 
-TCP is `net:{host}:{port}` port is not optional.
+TCP is a `net:{host}:{port}` port is not optional.
 
 ### ws
 
-WebSockets is `ws://{host}:{port}?` port defaults to 80 if not provided.
+WebSockets `ws://{host}:{port}?` port defaults to 80 if not provided.
 
 WebSockets over https is `wss://{host}:{port}?` where port is
 443 if not provided.
@@ -51,6 +62,24 @@ Secret-handshake is `shs:{public_key}:{seed}?`. `seed` is used to create
 a one-time shared private key, that may enable a special access.
 For example, you'll see that ssb invite codes have shs with two sections
 following. Normally, only a single argument (the remote public key) is necessary.
+
+### combined
+
+a network protocol is combined with 1 or more transform protocols,
+for example: `net:{host}:{port}~shs:{key}`
+
+### mutli
+
+A server that runs multiple protocols on different ports can simply join them
+with `;` and clients should connect to their preferred protocol.
+clients may try multiple protocols on the same server before giving up,
+but generally it's unlikely that protocols should not fail independently
+(unless there is a bug in one protocol).
+
+an example of a valid multiprotocol:
+`net:{host}:{port}~shs:{key};ws:{host}:{port}~shs:{key}`
+
+
 
 ### TODO
 
