@@ -68,7 +68,7 @@ following. Normally, only a single argument (the remote public key) is necessary
 a network protocol is combined with 1 or more transform protocols,
 for example: `net:{host}:{port}~shs:{key}`
 
-### mutli
+### multi
 
 A server that runs multiple protocols on different ports can simply join them
 with `;` and clients should connect to their preferred protocol.
