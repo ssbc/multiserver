@@ -5,12 +5,12 @@ module.exports = function (opts) {
     name: 'noauth',
     create: function (_opts) {
       return function (stream, cb) {
-        stream.address = 'noauth'
         cb(null, {
-          remote: '',
+          remote: opts.keys.publicKey,
           auth: { allow: null, deny: null },
           source: stream.source,
-          sink: stream.sink
+          sink: stream.sink,
+          address: 'noauth:' + opts.keys.publicKey.toString('base64')
         })
       }
     },
@@ -22,8 +22,3 @@ module.exports = function (opts) {
     }
   }
 }
-
-
-
-
-
