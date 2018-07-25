@@ -12,9 +12,11 @@ function toDuplex (str) {
 }
 
 module.exports = function (opts) {
+  // FIXME: does this even work anymore?
   opts.allowHalfOpen = opts.allowHalfOpen !== false
   return {
     name: 'net',
+    scope: function() { return opts.scope },
     server: function (onConnection) {
       var server = net.createServer(opts, function (stream) {
         var addr = stream.address()
@@ -61,8 +63,7 @@ module.exports = function (opts) {
       }
     },
     stringify: function () {
-      return ['net', opts.host || 'localhost', opts.port].join(':')
+      return ['net', opts.external || opts.host || 'localhost', opts.port].join(':')
     }
   }
 }
-

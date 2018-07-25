@@ -13,6 +13,7 @@ module.exports = function (opts) {
   }
   return {
     name: 'onion',
+    scope: function() { return opts.scope },
     server: function (onConnection) {
           if(!opts.server) return
 

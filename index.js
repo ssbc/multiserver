@@ -34,9 +34,11 @@ module.exports = function (plugs, wrap) {
         closes.forEach(function (close) { close() })
       }
     },
-    stringify: function () {
+    stringify: function (scope) {
+      if (!scope) scope = 'public'
       return plugs.map(function (plug) {
-        return plug.stringify()
+        if (plug.scope() == scope)
+          return plug.stringify()
       }).filter(Boolean).join(';')
     },
     //parse doesn't really make sense here...
