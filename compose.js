@@ -88,10 +88,10 @@ module.exports = function (ary, wrap) {
       })
     },
     parse: parse,
-    stringify: function () {
+    stringify: function (scope) {
       var none
       var _ary = ary.map(function (e) {
-        var v = e.stringify()
+        var v = e.stringify(scope)
         if(!v) none = true
         else return v
       })

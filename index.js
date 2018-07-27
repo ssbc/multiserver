@@ -37,8 +37,8 @@ module.exports = function (plugs, wrap) {
     stringify: function (scope) {
       if (!scope) scope = 'public'
       return plugs.map(function (plug) {
-        if (plug.scope() == scope)
-          return plug.stringify()
+        if (plug.scope() == scope || (plug.scope() == 'public' && scope == 'private'))
+          return plug.stringify(scope)
       }).filter(Boolean).join(';')
     },
     //parse doesn't really make sense here...

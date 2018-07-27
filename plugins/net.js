@@ -62,8 +62,11 @@ module.exports = function (opts) {
         port: port
       }
     },
-    stringify: function () {
-      return ['net', opts.external || opts.host || 'localhost', opts.port].join(':')
+    stringify: function (scope) {
+      var host = opts.external || opts.host || 'localhost'
+      if (scope == 'private')
+        host = opts.host || 'localhost'
+      return ['net', host, opts.port].join(':')
     }
   }
 }
