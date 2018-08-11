@@ -9,19 +9,19 @@ var started = false
 module.exports = function (opts) {
   const config = require('ssb-config/inject')(process.env.ssb_appname)
   const socket = path.join(config.path, 'socket')
-  const addr = 'local:' + socket
+  const addr = 'unix:' + socket
   
   function toDuplex (str) {
     var stream = toPull.duplex(str)
     stream.address = addr
-    stream.remote = 'local'
+    stream.remote = 'unix'
     stream.auth = { allow: null, deny: null }
     return stream
   }
 
   opts = opts || {}
   return {
-    name: 'local',
+    name: 'unix',
     scope: function() { return opts.scope },
     server: function (onConnection) {
       if(started) return
@@ -56,7 +56,7 @@ module.exports = function (opts) {
       }
     },
     client: function (opts, cb) {
-      console.log("local socket client")
+      console.log("unix socket client")
       var started = false
       var stream = net.connect(opts)
         .on('connect', function () {
@@ -75,10 +75,10 @@ module.exports = function (opts) {
       return function () {
         started = true
         stream.destroy()
-        cb(new Error('multiserver.local: aborted'))
+        cb(new Error('multiserver.unix: aborted'))
       }
     },
-    //MUST be local:socket_path
+    //MUST be unix:socket_path
     parse: function (s) {
       var ary = s.split(':')
       if(ary.length < 2) return null
