@@ -82,7 +82,7 @@ module.exports = function (opts) {
     parse: function (s) {
       var ary = s.split(':')
       if(ary.length < 2) return null
-      if('local' !== ary.shift()) return null
+      if('unix' !== ary.shift()) return null
       return {
         name: '',
         path: ary.shift()
