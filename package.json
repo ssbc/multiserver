@@ -14,6 +14,7 @@
     "secret-handshake": "^1.1.12",
     "separator-escape": "0.0.0",
     "socks": "1.1.9",
+    "ssb-config": "^2.2.0",
     "stream-to-pull-stream": "^1.7.2"
   },
   "devDependencies": {
