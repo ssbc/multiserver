@@ -2,7 +2,10 @@ var socks = require('socks');
 var toPull = require('stream-to-pull-stream')
 
 module.exports = function (opts) {
-  if(!socks) return //we are in browser
+  if(!socks) { //we are in browser
+	console.warn('onion dialing through socks proxy not supported in browser setting')
+	return 
+  }
 
   opts = opts || {}
   var proxyOpts = {
@@ -28,7 +31,7 @@ module.exports = function (opts) {
           socks.createConnection(serverOpts, function (err, socket) {
               if(err) {
                 console.error('unable to find local tor server.')
-                console.error('will be able receive tor connections')
+				console.error('will be able receive tor connections') // << ???
                 return
               }
               controlSocket = socket
