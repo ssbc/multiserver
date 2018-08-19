@@ -21,8 +21,8 @@ var check = function (id, cb) {
   cb(null, true)
 }
 
-var net = Net({port: 4848})
-var ws = Ws({port: 4849})
+var net = Net({port: 4848, scope: 'public'})
+var ws = Ws({port: 4849, scope: 'public'})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   requested = id
   ts = Date.now()
