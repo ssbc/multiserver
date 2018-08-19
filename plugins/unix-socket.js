@@ -7,8 +7,7 @@ var path = require('path')
 var started = false
 
 module.exports = function (opts) {
-  const config = require('ssb-config/inject')(process.env.ssb_appname)
-  const socket = path.join(config.path, 'socket')
+  const socket = path.join(opts.path || '', 'socket')
   const addr = 'unix:' + socket
   
   opts = opts || {}
@@ -17,7 +16,7 @@ module.exports = function (opts) {
     scope: function() { return opts.scope },
     server: function (onConnection) {
       if(started) return
-      console.log("listening on socket")
+      console.log("listening on socket", addr)
 
       var server = net.createServer(opts, function (stream) {
         onConnection(toPull.duplex(stream))
