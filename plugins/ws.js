@@ -9,6 +9,7 @@ module.exports = function (opts) {
   var secure = opts.server && !!opts.server.key
   return {
     name: 'ws',
+    scope: function() { return opts.scope },
     server: function (onConnect) {
       if(!WS.createServer) return
       var server = WS.createServer(opts, function (stream) {
