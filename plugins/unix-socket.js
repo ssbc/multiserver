@@ -11,14 +11,6 @@ module.exports = function (opts) {
   const socket = path.join(config.path, 'socket')
   const addr = 'unix:' + socket
   
-  function toDuplex (str) {
-    var stream = toPull.duplex(str)
-    stream.address = addr
-    stream.remote = 'unix'
-    stream.auth = { allow: null, deny: null }
-    return stream
-  }
-
   opts = opts || {}
   return {
     name: 'unix',
@@ -28,7 +20,7 @@ module.exports = function (opts) {
       console.log("listening on socket")
 
       var server = net.createServer(opts, function (stream) {
-        onConnection(toDuplex(stream))
+        onConnection(toPull.duplex(stream))
       }).listen(socket)
 
       server.on('error', function (e) {
@@ -63,7 +55,7 @@ module.exports = function (opts) {
           if(started) return
           started = true
 
-          cb(null, toDuplex(stream))
+          cb(null, toPull.duplex(stream))
         })
         .on('error', function (err) {
           console.log("err?", err)
