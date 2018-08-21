@@ -64,8 +64,9 @@ module.exports = function (opts) {
       }
 
       socks.createConnection(connectOpts, function(err, result) {
-        var socket = result.socket
         if (err) return cb(err)
+
+        var socket = result.socket
 
         if(destroy) return socket.destroy()
         _socket = socket
