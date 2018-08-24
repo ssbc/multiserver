@@ -9,11 +9,11 @@ var started = false
 module.exports = function (opts) {
   const socket = path.join(opts.path || '', 'socket')
   const addr = 'unix:' + socket
-  
+
   opts = opts || {}
   return {
     name: 'unix',
-    scope: function() { return opts.scope },
+    scope: function() { return opts.scope || 'public' },
     server: function (onConnection) {
       if(started) return
       console.log("listening on socket", addr)
@@ -26,22 +26,22 @@ module.exports = function (opts) {
         if (e.code == 'EADDRINUSE') {
           var clientSocket = new net.Socket()
           clientSocket.on('error', function(e) {
-            if (e.code == 'ECONNREFUSED') { 
+            if (e.code == 'ECONNREFUSED') {
               fs.unlinkSync(socket)
               server.listen(socket)
             }
           })
-          
-          clientSocket.connect({ path: socket }, function() { 
+
+          clientSocket.connect({ path: socket }, function() {
             console.log("someone else is listening on socket!")
           })
         }
       })
-      
+
       fs.chmodSync(socket, 0600)
 
       started = true
-      
+
       return function () {
         server.close()
       }

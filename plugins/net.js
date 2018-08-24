@@ -16,7 +16,7 @@ module.exports = function (opts) {
   opts.allowHalfOpen = opts.allowHalfOpen !== false
   return {
     name: 'net',
-    scope: function() { return opts.scope },
+    scope: function() { return opts.scope || 'public' },
     server: function (onConnection) {
       var server = net.createServer(opts, function (stream) {
         var addr = stream.address()
@@ -64,7 +64,7 @@ module.exports = function (opts) {
     },
     stringify: function (scope) {
       var host = opts.external || opts.host || 'localhost'
-      if (scope == 'private')
+      if (scope === 'private')
         host = opts.host || 'localhost'
       return ['net', host, opts.port].join(':')
     }
