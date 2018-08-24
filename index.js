@@ -36,10 +36,14 @@ module.exports = function (plugs, wrap) {
     },
     stringify: function (scope) {
       if (!scope) scope = 'public'
-      return plugs.map(function (plug) {
-        if (plug.scope() == scope || (plug.scope() == 'public' && scope == 'private'))
-          return plug.stringify(scope)
-      }).filter(Boolean).join(';')
+      return plugs
+        .filter(function (plug) {
+          return plug.scope() === scope ||
+            (plug.scope() === 'public' && scope === 'private')
+        })
+        .map(function (plug) { return plug.stringify(scope) })
+        .filter(Boolean)
+        .join(';')
     },
     //parse doesn't really make sense here...
     //like, what if you only have a partial match?
