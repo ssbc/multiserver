@@ -4,7 +4,11 @@ var toPull = require('stream-to-pull-stream')
 module.exports = function (opts) {
   if(!socks) { //we are in browser
     console.warn('onion dialing through socks proxy not supported in browser setting')
-    return
+    return {
+      name: 'onion',
+      scope: function() { return 'public' },
+      parse: function (s) { return null }
+    }
   }
 
   opts = opts || {}
