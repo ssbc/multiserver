@@ -81,7 +81,7 @@ module.exports = function (opts) {
     },
     stringify: function () {
       if(opts && !opts.server) return
-      return ['local', opts.path].join(':')
+      return ['unix', opts.path].join(':')
     }
   }
 }
