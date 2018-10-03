@@ -14,15 +14,15 @@ module.exports = function (plugs, wrap) {
   return {
     name: plugs.map(function (e) { return e.name }).join(';'),
     client: function (addr, cb) {
-      var addr = split(addr).find(function (addr) {
+      var _addr = split(addr).find(function (addr) {
         //connect with the first plug that understands this string.
         plug = plugs.find(function (plug) {
           return plug.parse(addr) ? plug : null
         })
         if(plug) return addr
       })
-      if(plug) plug.client(addr, cb)
-      else cb(new Error('could not connect to one of:'+addr))
+      if(plug) plug.client(_addr, cb)
+      else cb(new Error('could not connect to:'+addr+', only know:'+this.name))
     },
     server: function (onConnect, onError) {
       //start all servers
