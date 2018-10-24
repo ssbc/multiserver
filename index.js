@@ -1,5 +1,6 @@
 var compose = require('./compose')
 var isArray = Array.isArray
+var multicb = require('multicb')
 
 function split(str) {
   return isArray(str) ? str : str.split(';')
@@ -11,7 +12,7 @@ module.exports = function (plugs, wrap) {
     return isArray(e) ? compose(e, wrap) : e
   })
 
-  return {
+  var _self = {
     name: plugs.map(function (e) { return e.name }).join(';'),
     client: function (addr, cb) {
       var _addr = split(addr).find(function (addr) {
@@ -22,7 +23,7 @@ module.exports = function (plugs, wrap) {
         if(plug) return addr
       })
       if(plug) plug.client(_addr, cb)
-      else cb(new Error('could not connect to:'+addr+', only know:'+this.name))
+      else cb(new Error('could not connect to:'+addr+', only know:'+_self.name))
     },
     server: function (onConnect, onError) {
       //start all servers
@@ -30,8 +31,14 @@ module.exports = function (plugs, wrap) {
         return plug.server(onConnect, onError)
       }).filter(Boolean)
 
-      return function () {
-        closes.forEach(function (close) { close() })
+      return function (cb) {
+        var done
+        if (cb) done = multicb()
+        closes.forEach(function (close) {
+          if (done && close.length) close(done())
+          else close()
+        })
+        if (done) done(cb)
       }
     },
     stringify: function (scope) {
@@ -54,5 +61,6 @@ module.exports = function (plugs, wrap) {
       })
     }
   }
+  return _self
 }
 

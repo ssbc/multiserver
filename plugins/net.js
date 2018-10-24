@@ -26,9 +26,13 @@ module.exports = function (opts) {
         var addr = stream.address()
         onConnection(toDuplex(stream))
       }).listen(port, host)
-      return function () {
-        console.log('No longer listening on ' + host + ':' + port + ' (multiserver net plugin)')
-        server.close()
+      return function (cb) {
+        console.log('Closing server on ' + host + ':' + port + ' (multiserver net plugin)')
+        server.close(function(err) {
+          if (err) console.error(err)
+          else console.log('No longer listening on ' + host + ':' + port + ' (multiserver net plugin)')
+          if (cb) cb(err) 
+        })
       }
     },
     client: function (opts, cb) {

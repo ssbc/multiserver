@@ -23,9 +23,13 @@ module.exports = function (opts) {
         console.log('Listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
         server.listen(opts.port)
       }
-      return function() {
-        console.log('No longer listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
-        server.close()
+      return function (cb) {
+        console.log('Closing server on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
+        server.close(function(err) {
+          if (err) console.error(err)
+          else console.log('No longer listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
+          if (cb) cb(err) 
+        })
       }
     },
     client: function (addr, cb) {

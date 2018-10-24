@@ -22,7 +22,8 @@ var check = function (id, cb) {
   cb(null, true)
 }
 
-var net = Net({port: 4848, scope: 'device'})
+//var net = Net({port: 4848, scope: 'device'})
+var net = Net({port: 4848})
 var ws = Ws({port: 4848})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   requested = id
@@ -63,7 +64,6 @@ tape('parse, stringify', function (t) {
     [combined.stringify(), combined_ws.stringify()].join(';')
   )
 
-
   t.end()
 })
 
@@ -88,8 +88,7 @@ tape('combined', function (t) {
       pull.collect(function (err, ary) {
         if(err) throw err
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        t.end()
-        close()
+        close(function() {t.end()})
       })
     )
   })
@@ -118,8 +117,7 @@ tape('combined, ipv6', function (t) {
       pull.collect(function (err, ary) {
         if(err) throw err
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        t.end()
-        close()
+        close(function() {t.end()})
       })
     )
   })
@@ -139,9 +137,8 @@ tape('net: do not listen on all addresses', function (t) {
   var addr = combined.stringify('public') // returns external
   console.log('addr public scope', addr)
   combined.client(addr, function (err, stream) {
-    t.ok(err, 'should not listen on localhost')
-    t.end()
-    close()
+    t.ok(err, 'should only listen on localhost')
+    close(function() {t.end()})
   })
 })
 
@@ -168,8 +165,7 @@ tape('ws with combined', function (t) {
       }),
       pull.collect(function (err, ary) {
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        t.end()
-        close()
+        close(function() {t.end()})
       })
     )
   })
@@ -206,9 +202,8 @@ tape('shs with seed', function (t) {
   combined.client(addr_with_seed, function (err, stream) {
     t.notOk(err)
     t.deepEqual(checked, bob.publicKey)
-    t.end()
     stream.source(true, function () {})
-    close()
+    close(function() {t.end()})
   })
 
 })
@@ -283,8 +278,7 @@ tape('id of stream from server', function (t) {
     t.equal(addr[0].port, 4848)
     t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
     stream.source(true, function () {
-      close()
-      t.end()
+      close(function() {t.end()})
     })
   })
 })
@@ -292,20 +286,26 @@ tape('id of stream from server', function (t) {
 function testAbort (name, combined) {
 
   tape(name+', aborted', function (t) {
-    var close = combined.server(function () {
+    var close = combined.server(function onConnection() {
       throw new Error('should never happen')
     })
 
     var abort = combined.client(combined.stringify(), function (err, stream) {
       t.ok(err)
-      console.log('Calling close')
-      close()
-      setTimeout( ()=>
-        t.end(), 500
-      )
-    })
 
+      // NOTE: without the timeout, we try to close the server
+      // before it actually started listening, which fails and then
+      // the server keeps runnung, causing the next test to fail with EADDRINUSE
+      //
+      // This is messy, combined.server should be a proper async call
+      setTimeout( function() {
+        console.log('Calling close')
+        close(function() {t.end()})
+      }, 500)
+    })
+    
     abort()
+
   })
 }
 
@@ -325,8 +325,6 @@ tape('error should have client address on it', function (t) {
     t.ok(/\~shs\:/.test(err.address))
     //the shs address won't actually parse, because it doesn't have the key in it
     //because the key is not known in a wrong number.
-    t.end()
-    close()
   })
 
   //very unlikely this is the address, which will give a wrong number at the server.
@@ -334,8 +332,9 @@ tape('error should have client address on it', function (t) {
   combined.client(addr, function (err, stream) {
     //client should see client auth rejected
     t.ok(err)
-    close()
+    console.log('Calling close')
+    close() // in this case, net.server.close(cb) never calls its cb, why?
+    t.end()
   })
-
 })
 
