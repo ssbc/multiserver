@@ -1,6 +1,7 @@
 var tape = require('tape')
 var pull = require('pull-stream')
 var Pushable = require('pull-pushable')
+var scopes = require('ssb-scopes')
 
 var Compose = require('../compose')
 var Net = require('../plugins/net')
@@ -10,9 +11,9 @@ var Onion = require('../plugins/onion')
 var MultiServer = require('../')
 
 var cl = require('chloride')
-var seed = cl.crypto_hash_sha256(new Buffer('TESTSEED'))
+var seed = cl.crypto_hash_sha256(Buffer.from('TESTSEED'))
 var keys = cl.crypto_sign_seed_keypair(seed)
-var appKey = cl.crypto_hash_sha256(new Buffer('TEST'))
+var appKey = cl.crypto_hash_sha256(Buffer.from('TEST'))
 
 var requested, ts
 
@@ -21,7 +22,7 @@ var check = function (id, cb) {
   cb(null, true)
 }
 
-var net = Net({port: 4848})
+var net = Net({port: 4848, scope: 'device'})
 var ws = Ws({port: 4848})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   requested = id
@@ -70,7 +71,7 @@ function echo (stream) {
   pull(
     stream,
     pull.map(function (data) {
-      return new Buffer(data.toString().toUpperCase())
+      return Buffer.from(data.toString().toUpperCase())
     }),
     stream
   )
@@ -82,7 +83,7 @@ tape('combined', function (t) {
   combined.client(combined.stringify(), function (err, stream) {
     if(err) throw err
     pull(
-      pull.values([new Buffer('hello world')]),
+      pull.values([Buffer.from('hello world')]),
       stream,
       pull.collect(function (err, ary) {
         if(err) throw err
@@ -96,15 +97,23 @@ tape('combined', function (t) {
 
 
 tape('combined, ipv6', function (t) {
+  var combined = Compose([
+    Net({
+      port: 4848,
+      host: '::'
+    }),
+    shs
+  ])
   var close = combined.server(echo)
+  var addr = combined.stringify()
+  console.log('addr', addr)
 
-  var addr = combined.stringify().replace('localhost', '::1')
 
   combined.client(addr, function (err, stream) {
     if(err) throw err
     t.ok(stream.address, 'has an address')
     pull(
-      pull.values([new Buffer('hello world')]),
+      pull.values([Buffer.from('hello world')]),
       stream,
       pull.collect(function (err, ary) {
         if(err) throw err
@@ -115,6 +124,27 @@ tape('combined, ipv6', function (t) {
     )
   })
 })
+
+tape('net: do not listen on all addresses', function (t) {
+  var combined = Compose([
+    Net({
+      port: 4848,
+      host: 'localhost',
+      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
+    }),
+    shs
+  ])
+  var close = combined.server(echo)
+
+  var addr = combined.stringify('public') // returns external
+  console.log('addr public scope', addr)
+  combined.client(addr, function (err, stream) {
+    t.ok(err, 'should not listen on localhost')
+    t.end()
+    close()
+  })
+})
+
 
 
 tape('ws with combined', function (t) {
@@ -129,7 +159,7 @@ tape('ws with combined', function (t) {
     t.ok(stream.address, 'has an address')
     console.log('combined_ws address', stream.address)
     var pushable = Pushable()
-    pushable.push(new Buffer('hello world'))
+    pushable.push(Buffer.from('hello world'))
     pull(
       pushable,
       stream,
@@ -159,7 +189,7 @@ tape('shs with seed', function (t) {
 
   var close = combined.server(echo)
 
-  var seed = cl.crypto_hash_sha256(new Buffer('TEST SEED'))
+  var seed = cl.crypto_hash_sha256(Buffer.from('TEST SEED'))
   var bob = cl.crypto_sign_seed_keypair(seed)
 
   var checked
@@ -268,8 +298,11 @@ function testAbort (name, combined) {
 
     var abort = combined.client(combined.stringify(), function (err, stream) {
       t.ok(err)
-      t.end()
+      console.log('Calling close')
       close()
+      setTimeout( ()=>
+        t.end(), 500
+      )
     })
 
     abort()

@@ -4,6 +4,7 @@ try {
 } catch (_) {}
 
 var toPull = require('stream-to-pull-stream')
+var scopes = require('ssb-scopes')
 
 function toDuplex (str) {
   var stream = toPull.duplex(str)
@@ -18,11 +19,15 @@ module.exports = function (opts) {
     name: 'net',
     scope: function() { return opts.scope || 'public' },
     server: function (onConnection) {
+      var port = opts.port
+      var host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
+      console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
       var server = net.createServer(opts, function (stream) {
         var addr = stream.address()
         onConnection(toDuplex(stream))
-      }).listen(opts.port)
+      }).listen(port, host)
       return function () {
+        console.log('No longer listening on ' + host + ':' + port + ' (multiserver net plugin)')
         server.close()
       }
     },
@@ -63,9 +68,7 @@ module.exports = function (opts) {
       }
     },
     stringify: function (scope) {
-      var host = opts.external || opts.host || 'localhost'
-      if (scope === 'private')
-        host = opts.host || 'localhost'
+      var host = scope == 'public' && opts.external || opts.host || scope && scopes.host(scope) || 'localhost'
       return ['net', host, opts.port].join(':')
     }
   }
