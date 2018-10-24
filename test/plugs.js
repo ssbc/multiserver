@@ -35,6 +35,9 @@ var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
 var combined = Compose([net, shs])
 var combined_ws = Compose([ws, shs])
 
+// travis currently does not support ipv6, becaue GCE does not.
+var has_ipv6 = process.env.TRAVIS === undefined
+
 tape('parse, stringify', function (t) {
 
   t.equal(
@@ -94,7 +97,7 @@ tape('combined', function (t) {
   })
 })
 
-
+if (has_ipv6)
 tape('combined, ipv6', function (t) {
   var combined = Compose([
     Net({
