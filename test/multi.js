@@ -10,9 +10,9 @@ var Onion = require('../plugins/onion')
 var MultiServer = require('../')
 
 var cl = require('chloride')
-var seed = cl.crypto_hash_sha256(new Buffer('TESTSEED'))
+var seed = cl.crypto_hash_sha256(Buffer.from('TESTSEED'))
 var keys = cl.crypto_sign_seed_keypair(seed)
-var appKey = cl.crypto_hash_sha256(new Buffer('TEST'))
+var appKey = cl.crypto_hash_sha256(Buffer.from('TEST'))
 
 var requested, ts
 
@@ -60,7 +60,7 @@ tape('connect to either server', function (t) {
     t.ok(/^net/.test(client_addr), 'client connected via net')
     t.ok(/^net/.test(stream.address), 'client connected via net')
     pull(
-      pull.values([new Buffer('Hello')]),
+      pull.values([Buffer.from('Hello')]),
       stream,
       pull.collect(function (err,  ary) {
         var data = Buffer.concat(ary).toString('utf8')
@@ -81,7 +81,7 @@ tape('connect to either server', function (t) {
     t.ok(/^ws/.test(client_addr), 'client connected via ws')
     t.ok(/^ws/.test(stream.address), 'client connected via net')
     pull(
-      pull.values([new Buffer('Hello')]),
+      pull.values([Buffer.from('Hello')]),
       stream,
       pull.collect(function (err,  ary) {
         var data = Buffer.concat(ary).toString('utf8')
@@ -99,7 +99,7 @@ tape('connect to either server', function (t) {
     t.ok(/^net/.test(client_addr), 'client connected via net')
     t.ok(/^net/.test(stream.address), 'client connected via net')
     pull(
-      pull.values([new Buffer('Hello')]),
+      pull.values([Buffer.from('Hello')]),
       stream,
       pull.collect(function (err,  ary) {
         var data = Buffer.concat(ary).toString('utf8')

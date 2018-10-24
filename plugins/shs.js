@@ -7,7 +7,7 @@ function isString(s) {
 
 module.exports = function (opts) {
   var keys = SHS.toKeys(opts.keys || opts.seed)
-  var appKey = isString(opts.appKey) ? new Buffer(opts.appKey, 'base64') : opts.appKey
+  var appKey = isString(opts.appKey) ? Buffer.from(opts.appKey, 'base64') : opts.appKey
 
   var server = SHS.createServer(
     keys, opts.auth || opts.authenticate, appKey, opts.timeout
@@ -45,10 +45,10 @@ module.exports = function (opts) {
       //seed of private key to connect with, optional.
 
       if(ary.length > 2) {
-        seed = new Buffer(ary[2], 'base64')
+        seed = Buffer.from(ary[2], 'base64')
         if(seed.length !== 32) return null
       }
-      var key = new Buffer(ary[1], 'base64')
+      var key = Buffer.from(ary[1], 'base64')
       if(key.length !== 32) return null
 
       return {key: key, seed: seed}
