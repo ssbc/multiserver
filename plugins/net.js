@@ -4,7 +4,7 @@ try {
 } catch (_) {}
 
 var toPull = require('stream-to-pull-stream')
-var scopes = require('ssb-scopes')
+var scopes = require('multiserver-scopes')
 
 function toDuplex (str) {
   var stream = toPull.duplex(str)

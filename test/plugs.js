@@ -1,7 +1,7 @@
 var tape = require('tape')
 var pull = require('pull-stream')
 var Pushable = require('pull-pushable')
-var scopes = require('ssb-scopes')
+var scopes = require('multiserver-scopes')
 
 var Compose = require('../compose')
 var Net = require('../plugins/net')

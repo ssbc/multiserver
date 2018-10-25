@@ -2,7 +2,7 @@ var WS = require('pull-ws')
 var URL = require('url')
 var pull = require('pull-stream/pull')
 var Map = require('pull-stream/throughs/map')
-var scopes = require('ssb-scopes')
+var scopes = require('multiserver-scopes')
 
 module.exports = function (opts) {
   opts = opts || {}
