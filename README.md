@@ -56,6 +56,11 @@ WebSockets over https is `wss://{host}:{port}?` where port is
 
 Connect over tor using local proxy (9050). Onion is `onion:{host}:{port}` port is not optional.
 
+### reactnative-channel
+
+The [multiserver-rn-channel](http://npm.im/multiserver-rn-channel) module implementes
+a multiserver protocol for use inbetween the reactnative nodejs process and browser process.
+
 ### shs
 
 Secret-handshake is `shs:{public_key}:{seed}?`. `seed` is used to create
