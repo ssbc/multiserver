@@ -1,16 +1,21 @@
 var pull = require('pull-stream')
 
 module.exports = function (opts) {
+  opts = opts || {}
   return {
     name: 'noauth',
     create: function (_opts) {
       return function (stream, cb) {
+        if(opts.footgun !== true && stream.address !== opts.address)
+          return cb(new Error('unexpected client address:'+stream.address))
+        var public = opts.keys && opts.keys.publicKey
+        var id = public && public.toString('base64')
         cb(null, {
-          remote: opts.keys.publicKey,
+          remote: public,
           auth: { allow: null, deny: null },
           source: stream.source,
           sink: stream.sink,
-          address: 'noauth:' + opts.keys.publicKey.toString('base64')
+          address: 'noauth:' + id
         })
       }
     },
@@ -22,3 +27,5 @@ module.exports = function (opts) {
     }
   }
 }
+
+
