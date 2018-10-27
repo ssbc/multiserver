@@ -36,6 +36,20 @@ function compose (stream, transforms, cb) {
   })(null, stream, 0, stream.address)
 }
 
+function asyncify(f) {
+  return function(cb) {
+    if (f.length) return f(cb)
+    if (cb) {
+      var result
+      try{
+        result = f()
+      } catch(err) {return cb(err)}
+      return cb(null, result)
+    }
+    return f()
+  }
+}
+
 module.exports = function (ary, wrap) {
   if(!wrap) wrap = function (e) { return e }
   var proto = head(ary)
@@ -71,12 +85,15 @@ module.exports = function (ary, wrap) {
         )
       })
     },
+    // There should be a callback , called with
+    // null when the server started to listen.
+    // (net.server.listen is async for example)
     server: function (onConnection, onError) {
       onError = onError || function (err) {
         console.error('server error, from', err.address)
         console.error(err.stack)
       }
-      return proto.server(function (stream) {
+      return asyncify(proto.server(function (stream) {
         compose(
           wrap(stream),
           trans.map(function (tr) { return tr.create() }),
@@ -85,7 +102,7 @@ module.exports = function (ary, wrap) {
             else onConnection(stream)
           }
         )
-      })
+      }))
     },
     parse: parse,
     stringify: function (scope) {

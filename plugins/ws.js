@@ -2,6 +2,7 @@ var WS = require('pull-ws')
 var URL = require('url')
 var pull = require('pull-stream/pull')
 var Map = require('pull-stream/throughs/map')
+var scopes = require('multiserver-scopes')
 
 module.exports = function (opts) {
   opts = opts || {}
@@ -12,13 +13,24 @@ module.exports = function (opts) {
     scope: function() { return opts.scope || 'public' },
     server: function (onConnect) {
       if(!WS.createServer) return
+      opts.host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
       var server = WS.createServer(opts, function (stream) {
         stream.address = 'ws:'+stream.remoteAddress + (stream.remotePort ? ':'+stream.remotePort : '')
         onConnect(stream)
       })
 
-      if(!opts.server) server.listen(opts.port)
-      return server.close.bind(server)
+      if(!opts.server) {
+        console.log('Listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
+        server.listen(opts.port)
+      }
+      return function (cb) {
+        console.log('Closing server on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
+        server.close(function(err) {
+          if (err) console.error(err)
+          else console.log('No longer listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
+          if (cb) cb(err) 
+        })
+      }
     },
     client: function (addr, cb) {
       if(!addr.host) {
@@ -33,7 +45,7 @@ module.exports = function (opts) {
         binaryType: opts.binaryType,
         onConnect: function (err) {
           //ensure stream is a stream of node buffers
-          stream.source = pull(stream.source, Map(Buffer))
+          stream.source = pull(stream.source, Map(Buffer.from.bind(Buffer)))
           cb(err, stream)
         }
       })

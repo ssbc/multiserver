@@ -4,6 +4,7 @@ try {
 } catch (_) {}
 
 var toPull = require('stream-to-pull-stream')
+var scopes = require('multiserver-scopes')
 
 function toDuplex (str) {
   var stream = toPull.duplex(str)
@@ -18,12 +19,20 @@ module.exports = function (opts) {
     name: 'net',
     scope: function() { return opts.scope || 'public' },
     server: function (onConnection) {
+      var port = opts.port
+      var host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
+      console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
       var server = net.createServer(opts, function (stream) {
         var addr = stream.address()
         onConnection(toDuplex(stream))
-      }).listen(opts.port)
-      return function () {
-        server.close()
+      }).listen(port, host)
+      return function (cb) {
+        console.log('Closing server on ' + host + ':' + port + ' (multiserver net plugin)')
+        server.close(function(err) {
+          if (err) console.error(err)
+          else console.log('No longer listening on ' + host + ':' + port + ' (multiserver net plugin)')
+          if (cb) cb(err) 
+        })
       }
     },
     client: function (opts, cb) {
@@ -63,9 +72,7 @@ module.exports = function (opts) {
       }
     },
     stringify: function (scope) {
-      var host = opts.external || opts.host || 'localhost'
-      if (scope === 'private')
-        host = opts.host || 'localhost'
+      var host = scope == 'public' && opts.external || opts.host || scope && scopes.host(scope) || 'localhost'
       return ['net', host, opts.port].join(':')
     }
   }

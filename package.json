@@ -8,12 +8,14 @@
     "url": "git://github.com/dominictarr/multiserver.git"
   },
   "dependencies": {
+    "multicb": "^1.2.2",
     "pull-cat": "~1.1.5",
     "pull-stream": "^3.6.1",
     "pull-ws": "^3.3.0",
     "secret-handshake": "^1.1.12",
     "separator-escape": "0.0.0",
     "socks": "2.2.1",
+    "multiserver-scopes": "^1.0.0",
     "stream-to-pull-stream": "^1.7.2"
   },
   "devDependencies": {
