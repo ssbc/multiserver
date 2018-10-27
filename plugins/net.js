@@ -19,7 +19,6 @@ module.exports = function (opts) {
     scope: function() { return opts.scope || 'public' },
     server: function (onConnection) {
       var server = net.createServer(opts, function (stream) {
-        var addr = stream.address()
         onConnection(toDuplex(stream))
       }).listen(opts.port)
       return function () {
@@ -70,3 +69,5 @@ module.exports = function (opts) {
     }
   }
 }
+
+
