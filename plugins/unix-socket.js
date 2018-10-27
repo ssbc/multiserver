@@ -1,4 +1,4 @@
-var toPull = require('stream-to-pull-stream')
+var toDuplex = require('stream-to-pull-stream').duplex
 var net = require('net')
 var fs = require('fs')
 var path = require('path')
@@ -14,12 +14,14 @@ module.exports = function (opts) {
   return {
     name: 'unix',
     scope: function() { return opts.scope || 'public' },
-    server: function (onConnection) {
+    server: !opts.server ? null : function (onConnection) {
       if(started) return
       console.log("listening on socket", addr)
 
       var server = net.createServer(opts, function (stream) {
-        onConnection(toPull.duplex(stream))
+        stream = toDuplex(stream)
+        stream.address = addr
+        onConnection(stream)
       }).listen(socket)
 
       server.on('error', function (e) {
@@ -49,12 +51,14 @@ module.exports = function (opts) {
     client: function (opts, cb) {
       console.log("unix socket client")
       var started = false
-      var stream = net.connect(opts)
+      var stream = net.connect(opts.path)
         .on('connect', function () {
           if(started) return
           started = true
 
-          cb(null, toPull.duplex(stream))
+          var _stream = toDuplex(stream)
+          _stream.address = addr
+          cb(null, _stream)
         })
         .on('error', function (err) {
           console.log("err?", err)
@@ -81,7 +85,7 @@ module.exports = function (opts) {
     },
     stringify: function () {
       if(opts && !opts.server) return
-      return ['unix', opts.path].join(':')
+      return ['unix', socket].join(':')
     }
   }
 }
