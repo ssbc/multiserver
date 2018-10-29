@@ -7,7 +7,7 @@ module.exports = function (opts) {
     create: function (_opts) {
       return function (stream, cb) {
         if(opts.footgun !== true && stream.address !== opts.address)
-          return cb(new Error('unexpected client address:'+stream.address))
+          return cb(new Error('noauth transform not allowed for remote address '+stream.address))
         var public = opts.keys && opts.keys.publicKey
         var id = public && public.toString('base64')
         cb(null, {
