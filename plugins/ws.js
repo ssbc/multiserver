@@ -10,7 +10,7 @@ module.exports = function (opts) {
   var secure = opts.server && !!opts.server.key
   return {
     name: 'ws',
-    scope: function() { return opts.scope || 'public' },
+    scope: function() { return opts.scope || 'device' },
     server: function (onConnect) {
       if(!WS.createServer) return
       // Choose a dynamic port between 49152 and 65535
