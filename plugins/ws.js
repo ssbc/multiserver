@@ -4,6 +4,28 @@ var pull = require('pull-stream/pull')
 var Map = require('pull-stream/throughs/map')
 var scopes = require('multiserver-scopes')
 
+function safe_origin (origin, address, port) {
+
+  //if the connection is not localhost, we shouldn't trust
+  //the origin header. So, use address instead of origin
+  //if origin not set, then it's definitely not a browser.
+  if(!(address === '::1' || address === '128.0.0.1') || origin == undefined)
+    return 'ws:' + address + (port ? ':' + port : '')
+
+  //note: origin "null" (as string) can happen a bunch of ways
+  //      it can be a html opened as a file
+  //      or certain types of CORS
+  //      https://www.w3.org/TR/cors/#resource-sharing-check-0
+  //      and webworkers if loaded from data-url?
+  if(origin === 'null')
+    return 'ws:null'
+
+  //a connection from the browser on localhost,
+  //we choose to trust this came from a browser.
+  return origin.replace(/^http/, 'ws')
+
+}
+
 module.exports = function (opts) {
   opts = opts || {}
   opts.binaryType = (opts.binaryType || 'arraybuffer')
@@ -15,7 +37,11 @@ module.exports = function (opts) {
       if(!WS.createServer) return
       opts.host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
       var server = WS.createServer(opts, function (stream) {
-        stream.address = 'ws:'+stream.remoteAddress + (stream.remotePort ? ':'+stream.remotePort : '')
+        stream.address = safe_origin(
+          stream.headers.origin,
+          stream.remoteAddress,
+          stream.remotePort
+        )
         onConnect(stream)
       })
 

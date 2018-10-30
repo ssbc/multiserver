@@ -23,7 +23,6 @@ module.exports = function (opts) {
       var host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
       console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
       var server = net.createServer(opts, function (stream) {
-        var addr = stream.address()
         onConnection(toDuplex(stream))
       }).listen(port, host)
       return function (cb) {
@@ -77,3 +76,5 @@ module.exports = function (opts) {
     }
   }
 }
+
+
