@@ -97,8 +97,7 @@ tape('combined', function (t) {
   })
 })
 
-if (has_ipv6)
-tape('combined, ipv6', function (t) {
+if (has_ipv6)tape('combined, ipv6', function (t) {
   var combined = Compose([
     Net({
       port: 4848,
@@ -130,22 +129,20 @@ tape('net: do not listen on all addresses', function (t) {
   var combined = Compose([
     Net({
       port: 4848,
-      host: 'localhost',
+      scope: 'device',
       external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
     shs
   ])
   var close = combined.server(echo)
 
-  var addr = combined.stringify('public') // returns external
+  var addr = combined.stringify('local') // returns external
   console.log('addr public scope', addr)
   combined.client(addr, function (err, stream) {
     t.ok(err, 'should only listen on localhost')
     close(function() {t.end()})
   })
 })
-
-
 
 tape('ws with combined', function (t) {
   var close = combined_ws.server(function (stream) {
@@ -340,4 +337,8 @@ tape('error should have client address on it', function (t) {
     t.end()
   })
 })
+
+
+
+
 
