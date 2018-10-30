@@ -49,11 +49,10 @@ var close = multi.server(function (stream) {
 })
 
 var server_addr =
-'fake:peer.ignore~nul:what;'+multi.stringify()
+'fake:peer.ignore~nul:what;'+multi.stringify('public')
 //"fake" in a unkown protocol, just to make sure it gets skipped.
 
 tape('connect to either server', function (t) {
-
   multi.client(server_addr, function (err, stream) {
     if(err) throw err
     console.log(stream)

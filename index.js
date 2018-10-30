@@ -42,7 +42,7 @@ module.exports = function (plugs, wrap) {
       }
     },
     stringify: function (scope) {
-      if (!scope) scope = 'public'
+      if (!scope) scope = 'device'
       return plugs
         .filter(function (plug) {
           return plug.scope() === scope ||
