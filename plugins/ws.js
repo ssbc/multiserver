@@ -3,7 +3,7 @@ var URL = require('url')
 var pull = require('pull-stream/pull')
 var Map = require('pull-stream/throughs/map')
 var scopes = require('multiserver-scopes')
-
+var Multiscope = require('../multiscope')
 function safe_origin (origin, address, port) {
 
   //if the connection is not localhost, we shouldn't trust
@@ -36,27 +36,27 @@ module.exports = function (opts) {
     server: function (onConnect) {
       if(!WS.createServer) return
       opts.host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
-      var server = WS.createServer(opts, function (stream) {
-        stream.address = safe_origin(
-          stream.headers.origin,
-          stream.remoteAddress,
-          stream.remotePort
-        )
-        onConnect(stream)
-      })
 
-      if(!opts.server) {
-        console.log('Listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
-        server.listen(opts.port)
-      }
-      return function (cb) {
-        console.log('Closing server on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
-        server.close(function(err) {
-          if (err) console.error(err)
-          else console.log('No longer listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
-          if (cb) cb(err) 
+      function createServer () {
+        return WS.createServer(opts, function (stream) {
+          stream.address = safe_origin(
+            stream.headers.origin,
+            stream.remoteAddress,
+            stream.remotePort
+          )
+          onConnect(stream)
         })
       }
+      if(opts.server) {
+        var server = createServer()
+        return function (cb) {
+          server.close(function(err) {
+            if (cb) cb(err)
+          })
+        }
+      }
+      else
+        return Multiscope(opts.port, opts.scopes, createServer)
     },
     client: function (addr, cb) {
       if(!addr.host) {
@@ -103,4 +103,12 @@ module.exports = function (opts) {
     }
   }
 }
+
+
+
+
+
+
+
+
 

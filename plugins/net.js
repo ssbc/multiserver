@@ -1,10 +1,11 @@
+var Multiscope = require('../multiscope')
+var scopes = require('multiserver-scopes')
 var net
 try {
   net = require('net')
 } catch (_) {}
 
 var toPull = require('stream-to-pull-stream')
-var scopes = require('multiserver-scopes')
 
 function toDuplex (str) {
   var stream = toPull.duplex(str)
@@ -20,8 +21,12 @@ module.exports = function (opts) {
     scope: function() { return opts.scope || 'public' },
     server: function (onConnection) {
       var port = opts.port
-      var host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
-      console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
+//      var host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
+  //    console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
+      return Multiscope(opts.port, opts.scope, function () {
+        return net.createServer(opts, function (stream) { onConnection(toDuplex(stream)) })
+      })
+      /*
       var server = net.createServer(opts, function (stream) {
         onConnection(toDuplex(stream))
       }).listen(port, host)
@@ -33,6 +38,7 @@ module.exports = function (opts) {
           if (cb) cb(err) 
         })
       }
+      */
     },
     client: function (opts, cb) {
       var addr = 'net:'+opts.host+':'+opts.port
@@ -76,5 +82,6 @@ module.exports = function (opts) {
     }
   }
 }
+
 
 
