@@ -45,8 +45,7 @@ module.exports = function (plugs, wrap) {
       if (!scope) scope = 'device'
       return plugs
         .filter(function (plug) {
-          return plug.scope() === scope ||
-            (plug.scope() === 'public' && scope === 'private')
+          return plug.scope() === scope
         })
         .map(function (plug) { return plug.stringify(scope) })
         .filter(Boolean)
@@ -63,4 +62,5 @@ module.exports = function (plugs, wrap) {
   }
   return _self
 }
+
 
