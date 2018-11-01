@@ -21,10 +21,14 @@ module.exports = function (opts) {
 
   // FIXME: does this even work anymore?
   opts.allowHalfOpen = opts.allowHalfOpen !== false
+
+  function isScoped (s) {
+    return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
+  }
   
   return {
     name: 'net',
-    scope: function() { return scope},
+    scope: function() { return scope },
     server: function (onConnection) {
       console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
       var server = net.createServer(opts, function (stream) {
@@ -76,7 +80,9 @@ module.exports = function (opts) {
       }
     },
     stringify: function (scope) {
-      var _host = scope == 'public' ? opts.external : host
+      scope = scope || 'device'
+      if(!isScoped(scope)) return
+      var _host = (scope == 'public' && opts.external) || scopes.host(scope)
       return ['net', _host, port].join(':')
     }
   }

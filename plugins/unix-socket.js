@@ -9,11 +9,11 @@ var started = false
 module.exports = function (opts) {
   const socket = path.join(opts.path || '', 'socket')
   const addr = 'unix:' + socket
-
+  const scope = opts.scope || 'device'
   opts = opts || {}
   return {
     name: 'unix',
-    scope: function() { return opts.scope || 'public' },
+    scope: function() { return scope },
     server: !opts.server ? null : function (onConnection) {
       if(started) return
       console.log("listening on socket", addr)
@@ -83,8 +83,9 @@ module.exports = function (opts) {
         path: ary.shift()
       }
     },
-    stringify: function () {
-      if(opts && !opts.server) return
+    stringify: function (_scope) {
+      if(scope !== _scope) return null
+      if(opts && !opts.server) return null
       return ['unix', socket].join(':')
     }
   }

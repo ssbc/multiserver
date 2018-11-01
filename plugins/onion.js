@@ -36,7 +36,7 @@ module.exports = function (opts) {
       socks.createConnection(serverOpts, function (err, socket) {
         if(err) {
           console.error('unable to find local tor server.')
-	  console.error('will be able receive tor connections') // << ???
+          console.error('will be able receive tor connections') // << ???
           return
         }
         controlSocket = socket
@@ -101,8 +101,9 @@ module.exports = function (opts) {
         port: port
       }
     },
-    stringify: function () {
-      if(opts && !opts.server) return
+    stringify: function (scope) {
+      if(scope !== opts.scope) return null
+      if(opts && !opts.server) return null
       return ['onion', opts.host, opts.port].join(':')
     }
   }

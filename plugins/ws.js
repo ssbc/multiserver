@@ -29,6 +29,11 @@ function safe_origin (origin, address, port) {
 module.exports = function (opts) {
   opts = opts || {}
   opts.binaryType = (opts.binaryType || 'arraybuffer')
+  var scope = opts.scope || 'device'
+  function isScoped (s) {
+    return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
+  }
+
   var secure = opts.server && !!opts.server.key
   return {
     name: 'ws',
@@ -84,18 +89,24 @@ module.exports = function (opts) {
         stream.close(cb)
       }
     },
-    stringify: function () {
-      if(!WS.createServer) return
+    stringify: function (scope) {
+      scope = scope || 'device'
+      if(!isScoped(scope)) return null
+      if(!WS.createServer) return null
       var port
       if(opts.server)
         port = opts.server.address().port
       else
         port = opts.port
 
+      var host = (scope == 'public' && opts.external) || scopes.host(scope)
+      //if a public scope was requested, but a public ip is not available, return
+      if(!host) return null
+
       return URL.format({
         protocol: secure ? 'wss' : 'ws',
         slashes: true,
-        hostname: opts.host || 'localhost', //detect ip address
+        hostname: host,
         port: (secure ? port == 443 : port == 80) ? undefined : port
       })
     },
@@ -106,4 +117,7 @@ module.exports = function (opts) {
     }
   }
 }
+
+
+
 
