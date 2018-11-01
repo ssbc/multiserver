@@ -18,7 +18,6 @@ module.exports = function (opts) {
   var port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
   var host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
   var scope = opts.scope || 'device'
-
   // FIXME: does this even work anymore?
   opts.allowHalfOpen = opts.allowHalfOpen !== false
 
@@ -28,7 +27,9 @@ module.exports = function (opts) {
   
   return {
     name: 'net',
-    scope: function() { return scope },
+    scope: function() {
+      return scope
+    },
     server: function (onConnection) {
       console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
       var server = net.createServer(opts, function (stream) {
@@ -83,9 +84,9 @@ module.exports = function (opts) {
       scope = scope || 'device'
       if(!isScoped(scope)) return
       var _host = (scope == 'public' && opts.external) || scopes.host(scope)
+      if(!_host) return null
       return ['net', _host, port].join(':')
     }
   }
 }
-
 
