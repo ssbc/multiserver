@@ -43,7 +43,6 @@ module.exports = function (opts) {
       // Choose a dynamic port between 49152 and 65535
       // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
       opts.port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
-      opts.host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
       var server = WS.createServer(opts, function (stream) {
         stream.address = safe_origin(
           stream.headers.origin,
