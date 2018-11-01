@@ -41,11 +41,11 @@ var has_ipv6 = process.env.TRAVIS === undefined
 tape('parse, stringify', function (t) {
 
   t.equal(
-    net.stringify(),
+    net.stringify('device'),
     'net:localhost:4848'
   )
   t.equal(
-    ws.stringify(),
+    ws.stringify('device'),
     'ws://localhost:4848'
   )
   t.equal(
@@ -53,18 +53,18 @@ tape('parse, stringify', function (t) {
     'shs:' + keys.publicKey.toString('base64')
   )
   t.equal(
-    combined.stringify(),
-    net.stringify()+'~'+shs.stringify()
+    combined.stringify('device'),
+    net.stringify('device')+'~'+shs.stringify('device')
   )
   t.equal(
-    combined_ws.stringify(),
+    combined_ws.stringify('device'),
     ws.stringify()+'~'+shs.stringify()
   )
-  console.log(Compose([net, shs]).stringify())
+  console.log(Compose([net, shs]).stringify('device'))
   t.equal(
     MultiServer([combined, combined_ws]).stringify(),
 
-    [combined.stringify(), combined_ws.stringify()].join(';')
+    [combined.stringify('device'), combined_ws.stringify('device')].join(';')
   )
 
   t.end()
@@ -83,7 +83,7 @@ function echo (stream) {
 tape('combined', function (t) {
   var close = combined.server(echo)
 
-  combined.client(combined.stringify(), function (err, stream) {
+  combined.client(combined.stringify('device'), function (err, stream) {
     if(err) throw err
     pull(
       pull.values([Buffer.from('hello world')]),
@@ -107,7 +107,7 @@ tape('combined, ipv6', function (t) {
     shs
   ])
   var close = combined.server(echo)
-  var addr = combined.stringify()
+  var addr = combined.stringify('device')
   console.log('addr', addr)
 
 
@@ -129,16 +129,28 @@ tape('combined, ipv6', function (t) {
 tape('net: do not listen on all addresses', function (t) {
   var combined = Compose([
     Net({
+      scope: 'device',
       port: 4848,
       host: 'localhost',
-      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
+//      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
     shs
   ])
   var close = combined.server(echo)
 
-  var addr = combined.stringify('public') // returns external
-  console.log('addr public scope', addr)
+  //fake
+  var fake_combined = Compose([
+    Net({
+      scope: 'local',
+      port: 4848,
+      //host: 'localhost',
+//      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
+    }),
+    shs
+  ])
+
+  var addr = fake_combined.stringify('local') // returns external
+  console.log('addr local scope', addr)
   combined.client(addr, function (err, stream) {
     t.ok(err, 'should only listen on localhost')
     close(function() {t.end()})
@@ -213,33 +225,42 @@ tape('shs with seed', function (t) {
 
 tape('ws default port', function (t) {
   var ws = Ws({
-    host: 'domain.de',
+    external: 'domain.de',
+    scope: 'public',
     server: {
       key: null,
       address: function () { return {port: 80}}
     }})
-  t.equal(ws.stringify(), 'ws://domain.de')
+  t.equal(ws.stringify('public'), 'ws://domain.de')
+  t.equal(ws.stringify('local'), null)
+  t.equal(ws.stringify('device'), null)
   t.end()
 })
 
 
 tape('wss default port', function (t) {
   var ws = Ws({
-    host: 'domain.de',
+    external: 'domain.de',
+    scope: 'public',
     server: {
       key: true,
       address: function () { return {port: 443}}
     }})
-  t.equal(ws.stringify(), 'wss://domain.de')
+  t.equal(ws.stringify('public'), 'wss://domain.de')
+  t.equal(ws.stringify('local'), null)
+  t.equal(ws.stringify('device'), null)
   t.end()
 })
 
 
-var onion = Onion({server:false})
+var onion = Onion({server:false, scope: 'public'})
 
 tape('onion plug, server false', function (t) {
 
-  t.notOk(onion.stringify(), null)
+  t.notOk(onion.stringify('public'))
+
+  t.equal(onion.stringify('device'), null)
+  t.equal(onion.stringify('local'), null)
   t.deepEqual(
     onion.parse('onion:3234j5sv346bpih2.onion:2349'),
     {

@@ -21,8 +21,8 @@ var check = function (id, cb) {
   cb(null, true)
 }
 
-var net = Net({port: 4848, scope: 'public'})
-var ws = Ws({port: 4849, scope: 'public'})
+var net = Net({port: 4848, scope: 'device'})
+var ws = Ws({port: 4849, scope: 'device'})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   requested = id
   ts = Date.now()
@@ -48,11 +48,13 @@ var close = multi.server(function (stream) {
   pull(stream, stream)
 })
 
+
 var server_addr =
-'fake:peer.ignore~nul:what;'+multi.stringify('public')
+'fake:peer.ignore~nul:what;'+multi.stringify('device')
 //"fake" in a unkown protocol, just to make sure it gets skipped.
 
 tape('connect to either server', function (t) {
+  t.ok(multi.stringify('device'))
   multi.client(server_addr, function (err, stream) {
     if(err) throw err
     console.log(stream)
@@ -64,7 +66,6 @@ tape('connect to either server', function (t) {
       pull.collect(function (err,  ary) {
         var data = Buffer.concat(ary).toString('utf8')
         console.log("OUTPUT", data)
-//        close()
         t.end()
       })
     )
@@ -72,8 +73,6 @@ tape('connect to either server', function (t) {
 })
 
 tape('connect to either server', function (t) {
-
-  console.log(multi.stringify())
 
   multi_ws.client(server_addr, function (err, stream) {
     if(err) throw err
