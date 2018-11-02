@@ -45,16 +45,9 @@ module.exports = function (opts) {
       // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
       opts.port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
 
-      var server = opts.server ||
-      http.createServer(opts.handler)
-      .listen(
-        opts.port, opts.host,
-        function(err) {
-          if (err) console.error('ssb-ws failed to listen on ' + opts.host + ':' + opts.port, err)
-          else console.log('Listening on ' + opts.host + ':' + opts.port, '(ssb-ws)')
-      })
+      var server = opts.server || http.createServer(opts.handler)
 
-      var server = WS.createServer(Object.assign({}, opts, {server: server}), function (stream) {
+      var ws_server = WS.createServer(Object.assign({}, opts, {server: server}), function (stream) {
         stream.address = safe_origin(
           stream.headers.origin,
           stream.remoteAddress,
