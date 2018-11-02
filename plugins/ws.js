@@ -3,6 +3,7 @@ var URL = require('url')
 var pull = require('pull-stream/pull')
 var Map = require('pull-stream/throughs/map')
 var scopes = require('multiserver-scopes')
+var http = require('http')
 
 function safe_origin (origin, address, port) {
 
@@ -43,7 +44,17 @@ module.exports = function (opts) {
       // Choose a dynamic port between 49152 and 65535
       // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
       opts.port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
-      var server = WS.createServer(opts, function (stream) {
+
+      var server = opts.server ||
+      http.createServer(opts.handler)
+      .listen(
+        opts.port, opts.host,
+        function(err) {
+          if (err) console.error('ssb-ws failed to listen on ' + opts.host + ':' + opts.port, err)
+          else console.log('Listening on ' + opts.host + ':' + opts.port, '(ssb-ws)')
+      })
+
+      var server = WS.createServer(Object.assign({}, opts, {server: server}), function (stream) {
         stream.address = safe_origin(
           stream.headers.origin,
           stream.remoteAddress,
@@ -116,7 +127,4 @@ module.exports = function (opts) {
     }
   }
 }
-
-
-
 
