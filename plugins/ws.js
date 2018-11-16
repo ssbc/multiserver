@@ -3,6 +3,7 @@ var URL = require('url')
 var pull = require('pull-stream/pull')
 var Map = require('pull-stream/throughs/map')
 var scopes = require('multiserver-scopes')
+var http = require('http')
 
 function safe_origin (origin, address, port) {
 
@@ -29,14 +30,24 @@ function safe_origin (origin, address, port) {
 module.exports = function (opts) {
   opts = opts || {}
   opts.binaryType = (opts.binaryType || 'arraybuffer')
+  var scope = opts.scope || 'device'
+  function isScoped (s) {
+    return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
+  }
+
   var secure = opts.server && !!opts.server.key
   return {
     name: 'ws',
-    scope: function() { return opts.scope || 'public' },
+    scope: function() { return opts.scope || 'device' },
     server: function (onConnect) {
       if(!WS.createServer) return
-      opts.host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
-      var server = WS.createServer(opts, function (stream) {
+      // Choose a dynamic port between 49152 and 65535
+      // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
+      opts.port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
+
+      var server = opts.server || http.createServer(opts.handler)
+
+      var ws_server = WS.createServer(Object.assign({}, opts, {server: server}), function (stream) {
         stream.address = safe_origin(
           stream.headers.origin,
           stream.remoteAddress,
@@ -81,18 +92,24 @@ module.exports = function (opts) {
         stream.close(cb)
       }
     },
-    stringify: function () {
-      if(!WS.createServer) return
+    stringify: function (scope) {
+      scope = scope || 'device'
+      if(!isScoped(scope)) return null
+      if(!WS.createServer) return null
       var port
       if(opts.server)
         port = opts.server.address().port
       else
         port = opts.port
 
+      var host = (scope == 'public' && opts.external) || scopes.host(scope)
+      //if a public scope was requested, but a public ip is not available, return
+      if(!host) return null
+
       return URL.format({
         protocol: secure ? 'wss' : 'ws',
         slashes: true,
-        hostname: opts.host || 'localhost', //detect ip address
+        hostname: host,
         port: (secure ? port == 443 : port == 80) ? undefined : port
       })
     },

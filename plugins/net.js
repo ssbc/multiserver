@@ -13,14 +13,24 @@ function toDuplex (str) {
 }
 
 module.exports = function (opts) {
+  // Choose a dynamic port between 49152 and 65535
+  // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
+  var port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
+  var host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
+  var scope = opts.scope || 'device'
   // FIXME: does this even work anymore?
   opts.allowHalfOpen = opts.allowHalfOpen !== false
+
+  function isScoped (s) {
+    return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
+  }
+  
   return {
     name: 'net',
-    scope: function() { return opts.scope || 'public' },
+    scope: function() {
+      return scope
+    },
     server: function (onConnection) {
-      var port = opts.port
-      var host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
       console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
       var server = net.createServer(opts, function (stream) {
         onConnection(toDuplex(stream))
@@ -71,10 +81,12 @@ module.exports = function (opts) {
       }
     },
     stringify: function (scope) {
-      var host = scope == 'public' && opts.external || opts.host || scope && scopes.host(scope) || 'localhost'
-      return ['net', host, opts.port].join(':')
+      scope = scope || 'device'
+      if(!isScoped(scope)) return
+      var _host = (scope == 'public' && opts.external) || scopes.host(scope)
+      if(!_host) return null
+      return ['net', _host, port].join(':')
     }
   }
 }
-
 

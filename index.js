@@ -42,11 +42,11 @@ module.exports = function (plugs, wrap) {
       }
     },
     stringify: function (scope) {
-      if (!scope) scope = 'public'
+      if (!scope) scope = 'device'
       return plugs
         .filter(function (plug) {
-          return plug.scope() === scope ||
-            (plug.scope() === 'public' && scope === 'private')
+          var _scope = plug.scope()
+          return Array.isArray(_scope) ? ~_scope.indexOf(scope) : _scope === scope
         })
         .map(function (plug) { return plug.stringify(scope) })
         .filter(Boolean)
@@ -63,4 +63,5 @@ module.exports = function (plugs, wrap) {
   }
   return _self
 }
+
 
