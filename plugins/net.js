@@ -3,6 +3,10 @@ try {
   net = require('net')
 } catch (_) {}
 
+function isString(s) {
+  return 'string' == typeof s
+}
+
 var toPull = require('stream-to-pull-stream')
 var scopes = require('multiserver-scopes')
 
@@ -16,7 +20,8 @@ module.exports = function (opts) {
   // Choose a dynamic port between 49152 and 65535
   // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
   var port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
-  var host = opts.host || opts.scope && scopes.host(opts.scope) || 'localhost'
+  //does this actually need to set host from the scope here?
+  var host = opts.host || (isString(opts.scope) && scopes.host(opts.scope)) || 'localhost'
   var scope = opts.scope || 'device'
   // FIXME: does this even work anymore?
   opts.allowHalfOpen = opts.allowHalfOpen !== false
