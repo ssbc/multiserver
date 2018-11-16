@@ -21,7 +21,7 @@ module.exports = function (opts) {
   // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
   var port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
   //does this actually need to set host from the scope here?
-  var host = opts.host || (isString(opts.scope) && scopes.host(opts.scope)) || 'localhost'
+  var host = opts.host || (isString(opts.scope) && scopes.host(opts.scope))
   var scope = opts.scope || 'device'
   // FIXME: does this even work anymore?
   opts.allowHalfOpen = opts.allowHalfOpen !== false
