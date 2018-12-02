@@ -39,7 +39,12 @@ module.exports = function (opts) {
   return {
     name: 'ws',
     scope: function() { return opts.scope || 'device' },
-    server: function (onConnect) {
+    server: function (onConnect, onError, startedCb) {
+      console.log("eh?")
+      console.log(onConnect)
+      console.log(onError)
+      console.log(startedCb)
+
       if(!WS.createServer) return
       // Choose a dynamic port between 49152 and 65535
       // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
@@ -55,6 +60,8 @@ module.exports = function (opts) {
         )
         onConnect(stream)
       })
+
+      startedCb(null, true)
 
       if(!opts.server) {
         console.log('Listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')

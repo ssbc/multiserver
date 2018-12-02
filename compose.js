@@ -88,7 +88,7 @@ module.exports = function (ary, wrap) {
     // There should be a callback , called with
     // null when the server started to listen.
     // (net.server.listen is async for example)
-    server: function (onConnection, onError) {
+    server: function (onConnection, onError, onStart) {
       onError = onError || function (err) {
         console.error('server error, from', err.address)
         console.error(err.stack)

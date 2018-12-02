@@ -35,11 +35,11 @@ module.exports = function (opts) {
     scope: function() {
       return scope
     },
-    server: function (onConnection) {
+    server: function (onConnection, startedCb) {
       console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
       var server = net.createServer(opts, function (stream) {
         onConnection(toDuplex(stream))
-      }).listen(port, host)
+      }).listen(port, host, 511, startedCb)
       return function (cb) {
         console.log('Closing server on ' + host + ':' + port + ' (multiserver net plugin)')
         server.close(function(err) {

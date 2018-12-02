@@ -25,11 +25,21 @@ module.exports = function (plugs, wrap) {
       if(plug) plug.client(_addr, cb)
       else cb(new Error('could not connect to:'+addr+', only know:'+_self.name))
     },
-    server: function (onConnect, onError) {
+    server: function (onConnect, onError, startedCb) {
       //start all servers
+
+      if (!startedCb)
+        startedCb = (err, res) => {}
+
+      var started = multicb()
+
       var closes = plugs.map(function (plug) {
-        return plug.server(onConnect, onError)
+        var hm = started()
+
+        return plug.server(onConnect, onError, hm)
       }).filter(Boolean)
+
+      started(startedCb);
 
       return function (cb) {
         var done

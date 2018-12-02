@@ -21,7 +21,7 @@ module.exports = function (opts) {
   return {
     name: 'onion',
     scope: function() { return opts.scope || 'public' },
-    server: function (onConnection) {
+    server: function (onConnection, cb) {
       if(!opts.server) return
 
       var serverOpts = {
@@ -45,11 +45,14 @@ module.exports = function (opts) {
           stream = toPull.duplex(stream)
           stream.address = 'onion:'
           onConnection(stream)
+          
+          cb(null, true);
         })
 
         // Remember to resume the socket stream.
         socket.resume()
       })
+
       return function () {
         if (controlSocket != null)
           controlSocket.end()

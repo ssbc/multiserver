@@ -14,7 +14,7 @@ module.exports = function (opts) {
   return {
     name: 'unix',
     scope: function() { return scope },
-    server: !opts.server ? null : function (onConnection) {
+    server: !opts.server ? null : function (onConnection, cb) {
       if(started) return
       console.log("listening on socket", addr)
 
@@ -22,7 +22,7 @@ module.exports = function (opts) {
         stream = toDuplex(stream)
         stream.address = addr
         onConnection(stream)
-      }).listen(socket)
+      }).listen(socket, 511, cb)
 
       server.on('error', function (e) {
         if (e.code == 'EADDRINUSE') {
