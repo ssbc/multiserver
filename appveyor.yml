@@ -18,6 +18,8 @@ install:
 test_script:
   - node --version
   - npm --version
-  - npm test
+  - node test/async-server-close.js
+  - node test/multi.js
+  - node test/plugs.js
 
 build: off
