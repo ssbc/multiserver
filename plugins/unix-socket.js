@@ -47,7 +47,7 @@ module.exports = function (opts) {
         }
       })
 
-      if (process.platform !== 'windows') {
+      if (process.platform !== 'win32') {
         fs.chmodSync(socket, 0600)
       }
 
