@@ -160,7 +160,7 @@ tape('net: do not listen on all addresses', function (t) {
 })
 
 tape('combined, unix', function (t) {
-  var p = '/tmp/multitest'+(new Date()).getTime()
+  var p = 'multiunixtest'+(new Date()).getTime()
   fs.mkdirSync(p)
   var combined = Compose([
     Unix({
