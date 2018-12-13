@@ -1,3 +1,4 @@
+var fs = require('fs')
 var tape = require('tape')
 var pull = require('pull-stream')
 var Pushable = require('pull-pushable')
@@ -5,6 +6,7 @@ var scopes = require('multiserver-scopes')
 
 var Compose = require('../compose')
 var Net = require('../plugins/net')
+var Unix = require('../plugins/unix-socket')
 var Ws = require('../plugins/ws')
 var Shs = require('../plugins/shs')
 var Onion = require('../plugins/onion')
@@ -157,7 +159,37 @@ tape('net: do not listen on all addresses', function (t) {
   })
 })
 
+tape('combined, unix', function (t) {
+  var p = '/tmp/multitest'+(new Date()).getTime()
+  fs.mkdirSync(p)
+  var combined = Compose([
+    Unix({
+      server: true,
+      path: p,
+    }),
+    shs
+  ])
+  var close = combined.server(echo)
+  var addr = combined.stringify('device')
+  console.log('unix addr', addr)
 
+  combined.client(addr, function (err, stream) {
+    if(err) throw err
+    t.ok(stream.address, 'has an address')
+    pull(
+      pull.values([Buffer.from('hello world')]),
+      stream,
+      pull.collect(function (err, ary) {
+        if(err) throw err
+        t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+        close(function() {
+          fs.rmdirSync(p)
+          t.end()
+        })
+      })
+    )
+  })
+})
 
 tape('ws with combined', function (t) {
   var close = combined_ws.server(function (stream) {
