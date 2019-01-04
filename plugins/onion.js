@@ -46,8 +46,9 @@ module.exports = function (opts) {
           stream.address = 'onion:'
           onConnection(stream)
           
-          cb(null, true);
         })
+
+        cb(null, true);
 
         // Remember to resume the socket stream.
         socket.resume()

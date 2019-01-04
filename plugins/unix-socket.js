@@ -22,7 +22,7 @@ module.exports = function (opts) {
         stream = toDuplex(stream)
         stream.address = addr
         onConnection(stream)
-      }).listen(socket, 511, cb)
+      }).listen(socket, cb)
 
       server.on('error', function (e) {
         if (e.code == 'EADDRINUSE') {

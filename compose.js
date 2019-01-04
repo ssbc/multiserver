@@ -102,7 +102,7 @@ module.exports = function (ary, wrap) {
             else onConnection(stream)
           }
         )
-      }))
+      }, onStart))
     },
     parse: parse,
     stringify: function (scope) {

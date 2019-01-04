@@ -28,15 +28,14 @@ module.exports = function (plugs, wrap) {
     server: function (onConnect, onError, startedCb) {
       //start all servers
 
-      if (!startedCb)
-        startedCb = (err, res) => {}
+      if (!startedCb) {
+        startedCb = () => {}
+      }
 
       var started = multicb()
 
       var closes = plugs.map(function (plug) {
-        var hm = started()
-
-        return plug.server(onConnect, onError, hm)
+        return plug.server(onConnect, onError, started())
       }).filter(Boolean)
 
       started(startedCb);

@@ -39,11 +39,7 @@ module.exports = function (opts) {
   return {
     name: 'ws',
     scope: function() { return opts.scope || 'device' },
-    server: function (onConnect, onError, startedCb) {
-      console.log("eh?")
-      console.log(onConnect)
-      console.log(onError)
-      console.log(startedCb)
+    server: function (onConnect, startedCb) {
 
       if(!WS.createServer) return
       // Choose a dynamic port between 49152 and 65535
