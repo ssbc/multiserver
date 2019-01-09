@@ -57,12 +57,15 @@ module.exports = function (opts) {
         onConnect(stream)
       })
 
-      startedCb(null, true)
-
       if(!opts.server) {
         console.log('Listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
-        server.listen(opts.port)
+        server.listen(opts.port, function () {
+          startedCb && startedCb(null, true)
+        })
       }
+      else
+        startedCb && startedCb(null, true)
+
       return function (cb) {
         console.log('Closing server on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
         server.close(function(err) {
@@ -123,4 +126,7 @@ module.exports = function (opts) {
     }
   }
 }
+
+
+
 
