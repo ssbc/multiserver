@@ -42,11 +42,18 @@ var multi_net = MultiServer([ combined ])
 
 var client_addr
 
-var close = multi.server(function (stream) {
-  console.log("onConnect", stream.address)
-  client_addr = stream.address
-  pull(stream, stream)
+var close
+
+//listen, with new async interface
+tape('listen', function (t) {
+  close = multi.server(function (stream) {
+    console.log("onConnect", stream.address)
+    client_addr = stream.address
+    pull(stream, stream)
+  }, null, t.end)
+
 })
+
 
 
 var server_addr =
