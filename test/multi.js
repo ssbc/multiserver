@@ -23,6 +23,7 @@ var check = function (id, cb) {
 
 var net = Net({port: 4848, scope: 'device'})
 var ws = Ws({port: 4849, scope: 'device'})
+console.log('appKey', appKey)
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   requested = id
   ts = Date.now()
