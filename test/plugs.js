@@ -164,25 +164,26 @@ tape('ws with combined', function (t) {
     console.log('combined_ws address', stream.address)
     t.ok(stream.address, 'has an address')
     echo(stream)
-  })
+  }, null, function () {
 
-  combined_ws.client(combined_ws.stringify(), function (err, stream) {
-    if(err) throw err
-    t.ok(stream.address, 'has an address')
-    console.log('combined_ws address', stream.address)
-    var pushable = Pushable()
-    pushable.push(Buffer.from('hello world'))
-    pull(
-      pushable,
-      stream,
-      pull.through(function () {
-        pushable.end()
-      }),
-      pull.collect(function (err, ary) {
-        t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        close(function() {t.end()})
-      })
-    )
+    combined_ws.client(combined_ws.stringify(), function (err, stream) {
+      if(err) throw err
+      t.ok(stream.address, 'has an address')
+      console.log('combined_ws address', stream.address)
+      var pushable = Pushable()
+      pushable.push(Buffer.from('hello world'))
+      pull(
+        pushable,
+        stream,
+        pull.through(function () {
+          pushable.end()
+        }),
+        pull.collect(function (err, ary) {
+          t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+          close(function() {t.end()})
+        })
+      )
+    })
   })
 })
 
@@ -293,16 +294,17 @@ tape('id of stream from server', function (t) {
     pull(stream.source, stream.sink) //echo
   }, function (err) {
     if(err) throw err
-  })
+  }, function () {
 
-  combined.client(combined.stringify(), function (err, stream) {
-    if(err) throw err
-    var addr = combined.parse(stream.address)
-    t.equal(addr[0].name, 'net')
-    t.equal(addr[0].port, 4848)
-    t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
-    stream.source(true, function () {
-      close(function() {t.end()})
+    combined.client(combined.stringify(), function (err, stream) {
+      if(err) throw err
+      var addr = combined.parse(stream.address)
+      t.equal(addr[0].name, 'net')
+      t.equal(addr[0].port, 4848)
+      t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
+      stream.source(true, function () {
+        close(function() {t.end()})
+      })
     })
   })
 })
@@ -349,16 +351,17 @@ tape('error should have client address on it', function (t) {
     t.ok(/\~shs\:/.test(err.address))
     //the shs address won't actually parse, because it doesn't have the key in it
     //because the key is not known in a wrong number.
-  })
+  }, function () {
 
-  //very unlikely this is the address, which will give a wrong number at the server.
-  var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
-  combined.client(addr, function (err, stream) {
-    //client should see client auth rejected
-    t.ok(err)
-    console.log('Calling close')
-    close() // in this case, net.server.close(cb) never calls its cb, why?
-    t.end()
+    //very unlikely this is the address, which will give a wrong number at the server.
+    var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
+    combined.client(addr, function (err, stream) {
+      //client should see client auth rejected
+      t.ok(err)
+      console.log('Calling close')
+      close() // in this case, net.server.close(cb) never calls its cb, why?
+      t.end()
+    })
   })
 })
 
