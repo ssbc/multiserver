@@ -1,9 +1,10 @@
 var socks = require('socks').SocksClient;
 var toPull = require('stream-to-pull-stream')
+var debug = require('debug')('multiserver:onion')
 
 module.exports = function (opts) {
   if(!socks) { //we are in browser
-    console.warn('onion dialing through socks proxy not supported in browser setting')
+    debug('onion dialing through socks proxy not supported in browser setting')
     return {
       name: 'onion',
       scope: function() { return 'public' },
@@ -45,7 +46,6 @@ module.exports = function (opts) {
           stream = toPull.duplex(stream)
           stream.address = 'onion:'
           onConnection(stream)
-          
         })
 
         cb(null, true);

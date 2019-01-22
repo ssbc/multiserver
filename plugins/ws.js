@@ -4,6 +4,7 @@ var pull = require('pull-stream/pull')
 var Map = require('pull-stream/throughs/map')
 var scopes = require('multiserver-scopes')
 var http = require('http')
+var debug = require('debug')('multiserver:ws')
 
 function safe_origin (origin, address, port) {
 
@@ -58,7 +59,7 @@ module.exports = function (opts) {
       })
 
       if(!opts.server) {
-        console.log('Listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
+        debug('Listening on %s:%d', opts.host, opts.port)
         server.listen(opts.port, function () {
           startedCb && startedCb(null, true)
         })
@@ -67,11 +68,11 @@ module.exports = function (opts) {
         startedCb && startedCb(null, true)
 
       return function (cb) {
-        console.log('Closing server on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
+        debug('Closing server on %s:%d', opts.host, opts.port)
         server.close(function(err) {
           if (err) console.error(err)
-          else console.log('No longer listening on ' + opts.host +':' + opts.port + ' (multiserver ws plugin)')
-          if (cb) cb(err) 
+          else debug('No longer listening on %s:%d', opts.host, opts.port)
+          if (cb) cb(err)
         })
       }
     },

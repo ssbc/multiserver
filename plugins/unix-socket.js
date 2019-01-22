@@ -2,6 +2,7 @@ var toDuplex = require('stream-to-pull-stream').duplex
 var net = require('net')
 var fs = require('fs')
 var path = require('path')
+var debug = require('debug')('multiserver:unix')
 
 // hax on double transform
 var started = false
@@ -16,7 +17,7 @@ module.exports = function (opts) {
     scope: function() { return scope },
     server: !opts.server ? null : function (onConnection, cb) {
       if(started) return
-      console.log("listening on socket", addr)
+      debug('listening on socket %s', addr)
 
       var server = net.createServer(opts, function (stream) {
         stream = toDuplex(stream)
@@ -35,7 +36,7 @@ module.exports = function (opts) {
           })
 
           clientSocket.connect({ path: socket }, function() {
-            console.log("someone else is listening on socket!")
+            debug('someone else is listening on socket!')
           })
         }
       })
@@ -49,7 +50,7 @@ module.exports = function (opts) {
       }
     },
     client: function (opts, cb) {
-      console.log("unix socket client")
+      debug('unix socket client')
       var started = false
       var stream = net.connect(opts.path)
         .on('connect', function () {
@@ -61,7 +62,7 @@ module.exports = function (opts) {
           cb(null, _stream)
         })
         .on('error', function (err) {
-          console.log("err?", err)
+          debug('err? %o', err)
           if(started) return
           started = true
           cb(err)
