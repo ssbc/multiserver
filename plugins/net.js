@@ -9,6 +9,7 @@ function isString(s) {
 
 var toPull = require('stream-to-pull-stream')
 var scopes = require('multiserver-scopes')
+var debug = require('debug')('multiserver:net')
 
 function toDuplex (str) {
   var stream = toPull.duplex(str)
@@ -29,23 +30,23 @@ module.exports = function (opts) {
   function isScoped (s) {
     return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
   }
-  
+
   return {
     name: 'net',
     scope: function() {
       return scope
     },
     server: function (onConnection, startedCb) {
-      console.log('Listening on ' + host + ':' + port + ' (multiserver net plugin)')
+      debug('Listening on %s:%d', host, port)
       var server = net.createServer(opts, function (stream) {
         onConnection(toDuplex(stream))
       }).listen(port, host, startedCb)
       return function (cb) {
-        console.log('Closing server on ' + host + ':' + port + ' (multiserver net plugin)')
+        debug('Closing server on %s:%d', host, port)
         server.close(function(err) {
           if (err) console.error(err)
-          else console.log('No longer listening on ' + host + ':' + port + ' (multiserver net plugin)')
-          if (cb) cb(err) 
+          else debug('No longer listening on %s:%d', host, port)
+          if (cb) cb(err)
         })
       }
     },
