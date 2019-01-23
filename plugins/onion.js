@@ -16,7 +16,7 @@ module.exports = function (opts) {
     ipaddress: "127.0.0.1",
     //TODO: tor port should be configurable.
     port: 9050, // default tor port
-    type: 5
+    type: 4
   }
   return {
     name: 'onion',
