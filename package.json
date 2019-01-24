@@ -15,7 +15,7 @@
     "pull-ws": "^3.3.0",
     "secret-handshake": "^1.1.16",
     "separator-escape": "0.0.0",
-    "socks": "2.2.1",
+    "socks": "^2.2.3",
     "stream-to-pull-stream": "^1.7.2"
   },
   "devDependencies": {
