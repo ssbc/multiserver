@@ -18,6 +18,11 @@ module.exports = function (opts) {
     server: function (onConnection, cb) {
       if (started) return
 
+      if (opts.scope !== "device" && !opts.server) {
+        debug('Insecure scope for unix socket! If you really want this, you need to provide pass a \'server: true\' option')
+        return
+      }
+
       debug('listening on socket %s', addr)
 
       var server = net.createServer(opts, function (stream) {
