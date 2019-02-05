@@ -15,8 +15,9 @@ module.exports = function (opts) {
   return {
     name: 'unix',
     scope: function() { return scope },
-    server: !opts.server ? null : function (onConnection, cb) {
-      if(started) return
+    server: function (onConnection, cb) {
+      if (started) return
+
       debug('listening on socket %s', addr)
 
       var server = net.createServer(opts, function (stream) {
@@ -86,9 +87,7 @@ module.exports = function (opts) {
     },
     stringify: function (_scope) {
       if(scope !== _scope) return null
-      if(opts && !opts.server) return null
       return ['unix', socket].join(':')
     }
   }
 }
-

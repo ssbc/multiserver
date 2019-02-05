@@ -254,14 +254,15 @@ tape('wss default port', function (t) {
 })
 
 
-var onion = Onion({server:false, scope: 'public'})
+var onion = Onion({scope: 'public'})
 
-tape('onion plug, server false', function (t) {
+tape('onion plug', function (t) {
 
-  t.notOk(onion.stringify('public'))
-
+  // onion has no server
+  t.equal(onion.stringify('public'), null)
   t.equal(onion.stringify('device'), null)
   t.equal(onion.stringify('local'), null)
+
   t.deepEqual(
     onion.parse('onion:3234j5sv346bpih2.onion:2349'),
     {
@@ -273,11 +274,10 @@ tape('onion plug, server false', function (t) {
 
   var oshs = Compose([onion, shs])
 
-  //should not return an address, since onion is server: false
+  //should not return an address
   t.notOk(oshs.stringify())
 
   t.end()
-
 })
 
 tape('id of stream from server', function (t) {
