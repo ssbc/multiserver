@@ -10,7 +10,7 @@ var started = false
 module.exports = function (opts) {
   const socket = path.join(opts.path || '', 'socket')
   const addr = 'unix:' + socket
-  const scope = opts.scope || 'device'
+  let scope = opts.scope || 'device'
   opts = opts || {}
   return {
     name: 'unix',
@@ -18,9 +18,9 @@ module.exports = function (opts) {
     server: function (onConnection, cb) {
       if (started) return
 
-      if (opts.scope !== "device" && !opts.server) {
-        debug('Insecure scope for unix socket! If you really want this, you need to provide pass a \'server: true\' option')
-        return
+      if (scope !== "device") {
+        debug('Insecure scope for unix socket! Reverting to device scope')
+        scope = 'device'
       }
 
       debug('listening on socket %s', addr)
