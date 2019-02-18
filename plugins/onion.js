@@ -13,12 +13,17 @@ module.exports = function (opts) {
   }
 
   opts = opts || {}
-  var proxyOpts = {
+  var daemonProxyOpts = {
     ipaddress: "127.0.0.1",
-    //TODO: tor port should be configurable.
-    port: 9050, // default tor port
+    port: 9050,
     type: 5
   }
+  var browserProxyOpts = {
+    ipaddress: "127.0.0.1",
+    port: 9150,
+    type: 5
+  }
+
   return {
     name: 'onion',
     scope: function() { return opts.scope || 'public' },
@@ -26,7 +31,7 @@ module.exports = function (opts) {
       if(!opts.server) return
 
       var serverOpts = {
-        proxy: proxyOpts,
+        proxy: daemonProxyOpts,
         command: "bind",
         destination: {
           host: opts.host,
@@ -62,31 +67,42 @@ module.exports = function (opts) {
     client: function (opts, cb) {
       var started = false, _socket, destroy
 
-      var connectOpts = {
-        proxy: proxyOpts,
-        command: "connect",
-        destination: {
-          host: opts.host,
-          port: opts.port
+      function tryConnect(connectOpts, onFail) {
+        socks.createConnection(connectOpts, function(err, result) {
+          if (err) return onFail(err)
+
+          var socket = result.socket
+
+          if(destroy) return socket.destroy()
+          _socket = socket
+
+          var duplexStream = toPull.duplex(socket)
+          duplexStream.address = 'onion:'+connectOpts.destination.host+':'+connectOpts.destination.port
+
+          cb(null, duplexStream)
+
+          // Remember to resume the socket stream.
+          socket.resume()
+        })
+      }
+
+      function connectOpts(proxyOpts) {
+        return {
+          proxy: proxyOpts,
+          command: "connect",
+          destination: {
+            host: opts.host,
+            port: opts.port
+          }
         }
       }
 
-      socks.createConnection(connectOpts, function(err, result) {
-        if (err) return cb(err)
-
-        var socket = result.socket
-
-        if(destroy) return socket.destroy()
-        _socket = socket
-
-        var duplexStream = toPull.duplex(socket)
-        duplexStream.address = 'onion:'+connectOpts.destination.host+':'+connectOpts.destination.port
-
-        cb(null, duplexStream)
-
-        // Remember to resume the socket stream.
-        socket.resume()
+      tryConnect(connectOpts(daemonProxyOpts), function(err) {
+        tryConnect(connectOpts(browserProxyOpts), function(err) {
+          cb(err)
+        })
       })
+
       return function () {
         if(_socket) _socket.destroy()
         else destroy = true
@@ -112,4 +128,3 @@ module.exports = function (opts) {
     }
   }
 }
-
