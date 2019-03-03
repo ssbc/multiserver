@@ -10,13 +10,19 @@ var started = false
 module.exports = function (opts) {
   const socket = path.join(opts.path || '', 'socket')
   const addr = 'unix:' + socket
-  const scope = opts.scope || 'device'
+  let scope = opts.scope || 'device'
   opts = opts || {}
   return {
     name: 'unix',
     scope: function() { return scope },
-    server: !opts.server ? null : function (onConnection, cb) {
-      if(started) return
+    server: function (onConnection, cb) {
+      if (started) return
+
+      if (scope !== "device") {
+        debug('Insecure scope for unix socket! Reverting to device scope')
+        scope = 'device'
+      }
+
       debug('listening on socket %s', addr)
 
       var server = net.createServer(opts, function (stream) {
@@ -86,9 +92,7 @@ module.exports = function (opts) {
     },
     stringify: function (_scope) {
       if(scope !== _scope) return null
-      if(opts && !opts.server) return null
       return ['unix', socket].join(':')
     }
   }
 }
-

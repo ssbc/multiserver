@@ -52,10 +52,7 @@ tape('listen', function (t) {
     client_addr = stream.address
     pull(stream, stream)
   }, null, t.end)
-
 })
-
-
 
 var server_addr =
 'fake:peer.ignore~nul:what;'+multi.stringify('device')

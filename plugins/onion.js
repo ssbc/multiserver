@@ -28,41 +28,7 @@ module.exports = function (opts) {
     name: 'onion',
     scope: function() { return opts.scope || 'public' },
     server: function (onConnection, cb) {
-      if(!opts.server) return
-
-      var serverOpts = {
-        proxy: daemonProxyOpts,
-        command: "bind",
-        destination: {
-          host: opts.host,
-          port: opts.port
-        }
-      }
-      var controlSocket = null
-      socks.createConnection(serverOpts, function (err, socket) {
-        if(err) {
-          console.error('unable to find local tor server.')
-          console.error('will be able receive tor connections') // << ???
-          return
-        }
-        controlSocket = socket
-
-        socket.on('data', function(stream) {
-          stream = toPull.duplex(stream)
-          stream.address = 'onion:'
-          onConnection(stream)
-        })
-
-        cb(null, true);
-
-        // Remember to resume the socket stream.
-        socket.resume()
-      })
-
-      return function () {
-        if (controlSocket != null)
-          controlSocket.end()
-      }
+      cb(new Error("Use net plugin for onion server instead"))
     },
     client: function (opts, cb) {
       var started = false, _socket, destroy
@@ -122,9 +88,7 @@ module.exports = function (opts) {
       }
     },
     stringify: function (scope) {
-      if(scope !== opts.scope) return null
-      if(opts && !opts.server) return null
-      return ['onion', opts.host, opts.port].join(':')
+      return null
     }
   }
 }
