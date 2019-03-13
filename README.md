@@ -56,6 +56,10 @@ WebSockets over https is `wss://{host}:{port}?` where port is
 
 Connect over tor using local proxy (9050). Onion is `onion:{host}:{port}` port is not optional.
 
+### bluetooth
+
+The [multiserver-bluetooth](https://github.com/Happy0/multiserver-bluetooth) module implements a multiserver protocol for to communicate over Bluetooth Serial port.
+
 ### reactnative-channel
 
 The [multiserver-rn-channel](http://npm.im/multiserver-rn-channel) module implementes
