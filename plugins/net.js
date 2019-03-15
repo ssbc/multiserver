@@ -27,6 +27,9 @@ module.exports = function (opts) {
   // FIXME: does this even work anymore?
   opts.allowHalfOpen = opts.allowHalfOpen !== false
 
+  // ensure that `::` doesn't also bind to `0.0.0.0`
+  opts.ipv6Only = opts.ipv6Only || true
+
   function isScoped (s) {
     return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
   }

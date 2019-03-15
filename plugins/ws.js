@@ -30,7 +30,9 @@ function safe_origin (origin, address, port) {
 
 module.exports = function (opts) {
   opts = opts || {}
-  opts.binaryType = (opts.binaryType || 'arraybuffer')
+  opts.binaryType = opts.binaryType || 'arraybuffer'
+  opts.ipv6Only = opts.ipv6Only || true
+
   var scope = opts.scope || 'device'
   function isScoped (s) {
     return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
