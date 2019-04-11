@@ -60,7 +60,7 @@ module.exports = function (opts) {
 
       if(!opts.server) {
         debug('Listening on %s:%d', opts.host, opts.port)
-        server.listen(opts.port, function () {
+        server.listen(opts.port, opts.host, function () {
           startedCb && startedCb(null, true)
         })
       }
