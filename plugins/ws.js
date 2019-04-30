@@ -11,7 +11,7 @@ function safe_origin (origin, address, port) {
   //if the connection is not localhost, we shouldn't trust
   //the origin header. So, use address instead of origin
   //if origin not set, then it's definitely not a browser.
-  if(!(address === '::1' || address === '128.0.0.1') || origin == undefined)
+  if(!(address === '::1' || address === '127.0.0.1') || origin == undefined)
     return 'ws:' + address + (port ? ':' + port : '')
 
   //note: origin "null" (as string) can happen a bunch of ways
