@@ -3,13 +3,168 @@
 A single interface that can work with multiple protocols,
 and multiple transforms of those protocols (eg, security layer)
 
+## motivation
+
+Developing a p2p system is hard. especially hard is upgrading protocol layers.
+The contemporary approach is to [update code via a backdoor](https://whispersystems.org/blog/the-ecosystem-is-moving/),
+but as easily as security can be added, [it can be taken away](https://nakamotoinstitute.org/trusted-third-parties/).
+
+Before you can have a protocol, you need a connection between peers.
+That connection is over some form of network transport,
+probably encrypted with some encryption scheme, possibly
+compression or other layers too.
+
+Usually, two peers connect over a standard networking transport
+(probably tcp) then they have a negioation to decide
+what the next layer (of encryption, for example) should be.
+This allows protocol implementators to roll out improved
+versions of the encryption protocol. However, it does
+not allow them to upgrade the negioation protocol!
+If a negioation protocol has a vulnerability it's much
+harder to fix, and since the negioation needs to be unencrypted,
+it tends to reveal a lot about program the server is running.
+
+Some HTTP APIs provide upgradability a better, simpler way.
+By putting a version number within the url. A new version of
+the API can then be used without touching the old one at all.
+
+multiserver adapts this approach to lower level protocols.
+Instead of negioating which protocol to use, run multiple
+protocols side by side, and consider the protocol part of the address.
+
+Most network systems have some sort of address look up,
+there is peer identifier (such it's domain) and then
+a system that is queried to map that domain to the lower level
+network address (such as it's ip address, retrived via a DNS (Domain Name System) request)
+To connect to a website secured with https, first
+you look up the domain via DNS, then connect to the server.
+Then start a tls connection to that server, in which
+a cyphersuite is negioated, and a certificate is provided
+by the server. (this certifies that the server really
+owns that domain)
+
+If it was using multiserver, DNS would respond with a list of cyphersuites,
+(encoded as multiserver addresses) and then you'd connect directly to a server and start using the protocol, without negioation.
+p2p systems like scuttlebutt also usually have a lookup,
+but usally mapping from a public key to an ip address.
+Since a look up is needed anyway, it's a good place
+to provide information about the protocol that server speaks!
+
+This enables you to do two things, upgrade and bridging.
+
+### upgrade
+
+If a peer wants to upgrade from *weak* protocol
+to a *strong* one, they simply start serving *strong* via another port,
+and advertise that in the lookup system.
+Now peers that have support for *strong* can connect via that protocol.
+
+Once most peers have upgraded to strong, support for *weak* can be discontinued.
+
+This is just how some services (eg, github) have an API version
+in their URL scheme. It is now easy to use two different
+versions in parallel. later, they can close down the old API.
+
+``` js
+var MultiServer = require('multiserver')
+var chloride = require('chloride')
+var keys = chloride.crypto_sign_keypair()
+var appKey = "dTuPysQsRoyWzmsK6iegSV4U3Qu912vPpkOyx6bPuEk="
+
+function accept_all (id, cb) {
+  cb(null, true)
+}
+var ms = MultiServer([
+  [ //net + secret-handshake
+    require('multiserver/plugins/net')({port: 3333}),
+    require('multiserver/plugins/shs')({
+      keys: keys,
+      appKey: appKey, //application key
+      auth: accept_all
+    }),
+  ],
+  [ //net + secret-handshake2
+    //(not implemented yet, but incompatible with shs)
+    require('multiserver/plugins/net')({port: 4444}),
+    //this protocol doesn't exist yet, but it could.
+    require('secret-handshake2')({
+      keys: keys,
+      appKey: appKey //application key
+      auth: accept_all
+    }),
+  ]
+]
+
+console.log(ms.stringify())
+
+//=> net:<host>:3333~shs:<key>;net:<host>:4444~shs2:<key>
+
+//run two servers on two ports.
+//newer peers can connect directly to 4444 and use shs2.
+//this means the protocol can be _completely_ upgraded.
+ms.server(function (stream) {
+  console.log('connection from', stream.address)
+})
+
+//connect to legacy protocol
+ms.client('net:<host>:3333~shs:<key>', function (err, stream) {
+  //...
+})
+
+//connect to modern protocol
+ms.client('net:<host>:4444~shs2:<key>', function (err, stream) {
+  //...
+})
+
+```
+
+### bridging
+
+By exposing multiple network transports as part of
+the same address, you can allow connections from
+peers that wouldn't have been able to connect otherwise.
+
+Regular servers can do TCP. Desktop clients can speak TCP,
+but can't create TCP servers that other desktop computers can connect to reliably.
+Browsers can use WebSockets and WebRTC.
+WebRTC gives you p2p, but needs an introducer.
+Another option is [utp](https://github.com/mafintosh/utp-native)
+- probably the most convienent, because it doesn't need an introducer
+on _every connection_ (but it does require some bootstrapping),
+but that doesn't work in the browser either.
+
+``` js
+var MultiServer = require('multiserver')
+
+var ms = MultiServer([
+  require('multiserver/plugins/net')({port: 1234}),
+  require('multiserver/plugins/ws')({port: 2345})
+])
+
+//start a server (for both protocols!)
+//returns function to close the server.
+var close = ms.server(function (stream) {
+  //handle incoming connection
+})
+
+//connect to a protocol. uses whichever
+//handler understands the address (in this case, websockets)
+var abort = ms.client('ws://localhost:1234', function (err, stream) {
+  //...
+})
+
+//at any time abort() can be called to cancel the connection attempt.
+//if it's called after the connection is established, it will
+//abort the stream.
+```
+
 ## address format
 
 Addresses describe everything needed to connect to a peer.
 each address is divided into protocol sections separated by `~`.
 Each protocol section is divided itself by `:`. A protocol section
 starts with a name for that protocol, and then whatever arguments
-that protocol needs.
+that protocol needs. The syntax of the address format is defined by [multiserver-address](https://github.com/ssbc/multiserver-address)
 
 For example, the address for my ssb pubserver is:
 ```
@@ -41,36 +196,50 @@ This means use net, or wss. In some contexts, you might have a peer that underst
 websockets but not net (for example a browser), as long as a server speaks at least
 one protocol that a peer can understand, then they can communicate.
 
-### net
+## plugins implemented so far
+
+### `net = require('multiserver/plugins/net')`
 
 TCP is a `net:{host}:{port}` port is not optional.
 
-### ws
+### `ws = require('multiserver/plugins/ws`)
 
 WebSockets `ws://{host}:{port}?` port defaults to 80 if not provided.
 
 WebSockets over https is `wss://{host}:{port}?` where port is
 443 if not provided.
 
-### onion
+### `onion = require('multiserver/plugins/onion)`
 
 Connect over tor using local proxy (9050). Onion is `onion:{host}:{port}` port is not optional.
 
-### bluetooth
+### `bluetooth = require('multiserver-bluetooth')`
 
 The [multiserver-bluetooth](https://github.com/Happy0/multiserver-bluetooth) module implements a multiserver protocol for to communicate over Bluetooth Serial port.
 
-### reactnative-channel
+### `reactnative = require('multiserver-rn-channel')`
 
 The [multiserver-rn-channel](http://npm.im/multiserver-rn-channel) module implementes
 a multiserver protocol for use inbetween the reactnative nodejs process and browser process.
 
-### shs
+### `shs = require('multiserver/plugins/shs')`
 
 Secret-handshake is `shs:{public_key}:{seed}?`. `seed` is used to create
 a one-time shared private key, that may enable a special access.
 For example, you'll see that ssb invite codes have shs with two sections
 following. Normally, only a single argument (the remote public key) is necessary.
+
+### `noauth = require('multiserver/plugins/noauth')`
+
+This authenticates any connection without any encryption.
+This should only be used on local connections,
+such as if net is bound strictly to localhost,
+or a unix-socket. do not use with ws or net bound to public addresses.
+
+### `unix = require('multiserver/plugins/unix-socket')`
+
+network transport is unix socket. to connect to this
+you must have access to the same file system as the server.
 
 ### combined
 
@@ -97,128 +266,6 @@ A short list of other protocols which could be implemented:
 * cjdns
 * other encryption protocols...
 
-## motivation
-
-Developing a p2p system is hard. especially hard is upgrading protocol layers.
-The contemporary approach is to [update code via a backdoor](https://whispersystems.org/blog/the-ecosystem-is-moving/),
-but as easily as security can be added, it can be taken away. We need an approach
-to upgrading that is itself decentralized, and also does not accumulate legacy baggage.
-after upgrading past a version of the protocol, the system should be able to discard that
-without a trace.
-
-Traditionally, protocol versions are upgraded by negioating the version used in a handshake.
-But, how do you upgrade the handshake? You can't. This also tends to accumulate legacy, because
-you never know if you'll meet an old peer.
-
-Some HTTP APIs provide upgradability a better, simpler way.
-By putting a version number within the url. A new version of
-the API can then be used without touching the old one at all.
-
-I propose to adapt this approach to lower level protocols.
-Do not negioate versions/ciphersuits in the handshake.
-Instead, run multiple protocols at once, and "lookup" which
-versions a peer supports currently. Most p2p systems have
-some sort of lookup system to find peers _anyway_
-(might be DHT, a tracker server, or gossip),
-just put version information in there.
-
-There are two main situations where I expect this to be useful:
-upgrading ciphers and bridging across enviroments that are
-otherwise cannot talk to each other (web browser to desktop)
-
-### upgrade
-
-If a peer wants to upgrade from *weak* protocol
-to a *strong* one, they simply start serving *strong* via another port,
-and advertise that in the lookup system.
-Now peers that have support for *strong* can connect via that protocol.
-
-Once most peers have upgraded to strong, support for *weak* can be discontinued.
-
-### bridging
-
-Regular servers can do TCP. Desktop clients can speak TCP,
-but can't create TCP servers reliably. Browsers can
-use WebSockets and WebRTC. WebRTC gives you p2p, but
-needs an introducer. Another option is [utp](https://github.com/mafintosh/utp-native)
-- probably the most convienent, because it doesn't need an introducer
-on _every connection_ (but it does require some bootstrapping),
-but that doesn't work in the browser either.
-
-``` js
-var MultiServer = require('multiserver')
-
-var ms = MultiServer([
-  require('multiserver/plugins/net')({port: 1234}),
-  require('multiserver/plugins/ws')({port: 2345})
-])
-
-//start a server (for both protocols!)
-//returns function to close the server.
-var close = ms.server(function (stream) {
-  //handle incoming connection
-})
-
-//connect to a protocol. uses whichever
-//handler understands the address (in this case, websockets)
-var abort = ms.client('ws://localhost:1234', function (err, stream) {
-  //...
-})
-
-//at any time abort() can be called to cancel the connection attempt.
-//if it's called after the connection is established, it will
-//abort the stream.
-```
-
-### example - server with two security protocols
-
-This is just how some services (eg, github) have an API version
-in their URL scheme. It is now easy to use two different
-versions in parallel. later, they can close down the old API.
-``` js
-var MultiServer = require('multiserver')
-var ms = MultiServer([
-  [ //net + secret-handshake
-    require('multiserver/plugins/net')({port: 3333}),
-    require('secret-handshake-multiserver')({
-      keys: //keypair
-      appKey: //application key
-      auth: //auth function (only needed for server)
-    }),
-  ],
-  [ //net + secret-handshake2
-    //(not implemented yet, but incompatible with shs)
-    require('multiserver/plugins/net')({port: 4444}),
-    require('secret-handshake2-multiserver')({
-      keys: //keypair
-      appKey: //application key
-      auth: //auth function (only needed for server)
-    }),
-  ]
-]
-
-console.log(ms.stringify())
-
-//=> net:<host>:3333~shs:<key>;net:<host>:4444~shs2:<key>
-
-//run two servers on two ports.
-//newer peers can connect directly to 4444 and use shs2.
-//this means the protocol can be _completely_ upgraded.
-ms.server(function (stream) {
-
-})
-
-//connect to legacy protocol
-ms.client('net:<host>:3333~shs:<key>', function (err, stream) {
-  //...
-})
-
-//connect to modern protocol
-ms.client('net:<host>:4444~shs2:<key>', function (err, stream) {
-  //...
-})
-
-```
 
 ## License
 
