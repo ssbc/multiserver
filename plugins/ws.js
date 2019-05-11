@@ -109,7 +109,7 @@ module.exports = function (opts) {
       else
         port = opts.port
 
-      var host = (scope == 'public' && opts.external) || scopes.host(scope)
+      var host = opts.host || (scope == 'public' && opts.external) || scopes.host(scope)
       //if a public scope was requested, but a public ip is not available, return
       if(!host) return null
 

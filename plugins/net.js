@@ -89,7 +89,7 @@ module.exports = function (opts) {
     stringify: function (scope) {
       scope = scope || 'device'
       if(!isScoped(scope)) return
-      var _host = (scope == 'public' && opts.external) || scopes.host(scope)
+      var _host = opts.host || (scope == 'public' && opts.external) || scopes.host(scope)
       if(!_host) return null
       return ['net', _host, port].join(':')
     }
