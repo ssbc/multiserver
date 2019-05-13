@@ -1,44 +1,55 @@
 var net
 try {
   net = require('net')
-} catch (_) {}
-
-function isString(s) {
-  return 'string' == typeof s
+} catch (_) {
+  // This only throws in browsers because they don't have access to the Node
+  // net library, which is safe to ignore because they should only be running
+  // `parse()` and `stringify()`.
 }
 
 var toPull = require('stream-to-pull-stream')
 var scopes = require('multiserver-scopes')
 var debug = require('debug')('multiserver:net')
 
+const isString = (s) => 'string' == typeof s
+const toAddress = (host, port) => ['net', host, port ].join(':')
+
 function toDuplex (str) {
   var stream = toPull.duplex(str)
-  stream.address = 'net:'+str.remoteAddress+':'+str.remotePort
+  stream.address = toAddress(str.remoteAddress, str.remotePort)
   return stream
 }
 
-module.exports = function (opts) {
-  // Choose a dynamic port between 49152 and 65535
-  // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
-  var port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
-  //does this actually need to set host from the scope here?
-  var host = opts.host || (isString(opts.scope) && scopes.host(opts.scope))
-  var scope = opts.scope || 'device'
-  // FIXME: does this even work anymore?
-  opts.allowHalfOpen = opts.allowHalfOpen !== false
+// Choose a dynamic port between 49152 and 65535
+// https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
+const getRandomPort = () =>
+  Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
 
-  function isScoped (s) {
-    return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
+module.exports = ({ scope, host, port, external, allowHalfOpen, pauseOnConnect }) => {
+  // Arguments are `scope` and `external` plus selected options for
+  // `net.createServer()` and `server.listen()`.
+  scope = scope || 'device'
+  port = port || getRandomPort()
+  host = host || (isString(scope) && scopes.host(scope))
+
+  function isAllowedScope (s) {
+    return s === scope || Array.isArray(scope) && scope.includes(s)
   }
 
   return {
     name: 'net',
-    scope: function() {
-      return scope
-    },
+    scope: () => scope,
     server: function (onConnection, startedCb) {
       debug('Listening on %s:%d', host, port)
-      var server = net.createServer(opts, function (stream) {
+
+      // TODO: We convert `allowHalfOpen` to boolean for legacy reasons, this
+      // should be removed when multiserver undergoes a major version change.
+      const serverOpts = {
+        allowHalfOpen: !!allowHalfOpen,
+        pauseOnConnect
+      }
+
+      var server = net.createServer(serverOpts, function (stream) {
         onConnection(toDuplex(stream))
       }).listen(port, host, startedCb)
       return function (cb) {
@@ -51,7 +62,6 @@ module.exports = function (opts) {
       }
     },
     client: function (opts, cb) {
-      var addr = 'net:'+opts.host+':'+opts.port
       var started = false
       var stream = net.connect(opts)
         .on('connect', function () {
@@ -86,12 +96,26 @@ module.exports = function (opts) {
         port: port
       }
     },
-    stringify: function (scope) {
-      scope = scope || 'device'
-      if(!isScoped(scope)) return
-      var _host = opts.host || (scope == 'public' && opts.external) || scopes.host(scope)
-      if(!_host) return null
-      return ['net', _host, port].join(':')
+    stringify: function (targetScope) {
+      targetScope = scope || 'device'
+
+      if (isAllowedScope(targetScope) === false) {
+        return null
+      }
+
+      // We want to avoid using `host` if the target scope is public and some
+      // external host (like example.com) is defined.
+      const externalHost = targetScope === 'public' && external
+      const resultHost = externalHost || host
+
+      if (resultHost == null) {
+        // This should only happen if `host == null && publicHost == null`,
+        // which may not even be possible (?). This may be a candidate for
+        // removal in the future.
+        return null
+      }
+
+      return toAddress(resultHost, port)
     }
   }
 }
