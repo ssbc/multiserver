@@ -256,7 +256,31 @@ ws.stringify() => 'ws://HOST:PORT'
 
 ### `onion = require('multiserver/plugins/onion)`
 
-Connect over tor using local proxy (9050). Onion is `onion:{host}:{port}` port is not optional.
+Connect over tor using local proxy (9050).
+the tor ports are unconfigurable. the standard
+tor ports are always used.
+
+Also, this plugin does not support creating a server.
+You should use tor's configuration to set up a net
+instance as a hidden service.
+
+An accepted onion address looks like: `onion:{host}:{port}`
+port is not optional. This plugin does not return
+an address, so you must construct this address manually.
+
+``` js
+var Onion = require('multiserver/plugins/onion`)
+
+
+var onion = WebSockets({
+  //no config is needed except scope, but you
+  //surely will use this with "public" which is the default
+  //scope:'public'
+})
+
+ws.stringify() => null
+```
+
 
 ### `bluetooth = require('multiserver-bluetooth')`
 
@@ -372,5 +396,12 @@ In all cases the stream is a [duplex stream](https://github.com/pull-stream/pull
 ## License
 
 MIT
+
+
+
+
+
+
+
 
 
