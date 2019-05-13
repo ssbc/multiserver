@@ -243,18 +243,18 @@ WebSockets over https is `wss://{host}:{port}?` where port is
 var WebSockets = require('multiserver/plugins/ws`)
 
 var ws = WebSockets({
-  port: PORT,
-  host: HOST,
+  port: 1234,
+  host: 'mydomain.com',
   handler: function (req, res) {
     res.end('<h1>hello</h1>')
   },
   scope:...
 })
 
-ws.stringify() => 'ws://HOST:PORT'
+ws.stringify() => 'ws://mydomain.com:1234'
 ```
 
-### `onion = require('multiserver/plugins/onion)`
+### `Onion()`
 
 Connect over tor using local proxy (9050).
 the tor ports are unconfigurable. the standard
@@ -282,7 +282,7 @@ ws.stringify() => null
 ```
 
 
-### `bluetooth = require('multiserver-bluetooth')`
+### `Bluetooth({bluetoothManager})`
 
 The [multiserver-bluetooth](https://github.com/Happy0/multiserver-bluetooth) module implements a multiserver protocol for to communicate over Bluetooth Serial port.
 
@@ -291,31 +291,74 @@ The [multiserver-bluetooth](https://github.com/Happy0/multiserver-bluetooth) mod
 The [multiserver-rn-channel](http://npm.im/multiserver-rn-channel) module implementes
 a multiserver protocol for use inbetween the reactnative nodejs process and browser process.
 
-### `shs = require('multiserver/plugins/shs')`
+### `SHS({keys,timeout?,appKey,auth})`
 
 Secret-handshake is `shs:{public_key}:{seed}?`. `seed` is used to create
 a one-time shared private key, that may enable a special access.
 For example, you'll see that ssb invite codes have shs with two sections
 following. Normally, only a single argument (the remote public key) is necessary.
 
-### `noauth = require('multiserver/plugins/noauth')`
+``` js
+var SHS = require('multiserver/plugins/shs')
+
+var shs = SHS({
+  keys: keys,
+  timeout: //set handshake timeout, if unset falls through to secret-handshake default
+  appKey: //sets an appkey
+  auth: function (id, cb) {
+    if(isNotAuthorized(id))
+      cb(new Error())
+    else
+      cb(null, authenticationDetails)
+  }
+})
+shs.stringify() => 'shs:{keys.publicKey.toString('base64')}
+```
+
+note, if the `auth` function calls back a truthy value,
+it is considered authenticated. The value called back
+may be an object that represents details of the authentication.
+when a successful connection goes through `shs` plugin,
+the stream will have an `auth` property, which is the value called back from `auth`,
+and a `remote` property (the id of remote key).
+
+### `Noauth({keys})`
 
 This authenticates any connection without any encryption.
 This should only be used on local connections,
 such as if net is bound strictly to localhost,
 or a unix-socket. do not use with ws or net bound to public addresses.
 
-### `unix = require('multiserver/plugins/unix-socket')`
+``` js
+var Noauth = require('multiserver/plugins/noauth')
+
+var noauth = Noauth({
+  keys: keys
+})
+shs.stringify() => 'shs:{keys.publicKey.toString('base64')}
+
+```
+
+streams passing through this will look like an authenticated shs connection.
+
+### `Unix = require('multiserver/plugins/unix-socket')`
 
 network transport is unix socket. to connect to this
 you must have access to the same file system as the server.
 
-### combined
+``` js
+var Unix = require('multiserver/plugins/unix-socket')
 
-a network protocol is combined with 1 or more transform protocols,
-for example: `net:{host}:{port}~shs:{key}`
+var unix = Unix({
+  path: where_to_put_socket,
+  scope: ... //defaults to device
+})
 
-### multi
+unix.stringify() => "unix:{where_to_put_socket}"
+```
+
+
+### createMultiServer([[transport,transforms...],...])
 
 A server that runs multiple protocols on different ports can simply join them
 with `;` and clients should connect to their preferred protocol.
@@ -325,6 +368,24 @@ but generally it's unlikely that protocols should not fail independently
 
 an example of a valid multiprotocol:
 `net:{host}:{port}~shs:{key};ws:{host}:{port}~shs:{key}`
+
+``` js
+var MultiServer = require('multiserver')
+
+var ms = MultiServer([
+  [net, shs],
+  [ws, shs],
+  [unix, noauth]
+])
+
+ms.stringify('public') => "net:mydomain.com:8889~shs:<key>;ws://mydomain.com:1234~shs:<key>"
+ms.stringify('device') => "unix:{where_to_put_socket}"
+
+ms.server(function (stream) {
+  //now that all the plugins are combined,
+  //ready to use as an actual server.
+})
+```
 
 ## interfaces
 
