@@ -105,12 +105,10 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
       // We want to avoid using `host` if the target scope is public and some
       // external host (like example.com) is defined.
       const externalHost = targetScope === 'public' && external
-      const resultHost = externalHost || host
+      const resultHost = externalHost || host || scopes.host(targetScope)
 
       if (resultHost == null) {
-        // This should only happen if `host == null && publicHost == null`,
-        // which may not even be possible (?). This may be a candidate for
-        // removal in the future.
+        // The device has no network interface for a given `targetScope`.
         return null
       }
 
