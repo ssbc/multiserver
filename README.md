@@ -196,18 +196,63 @@ This means use net, or wss. In some contexts, you might have a peer that underst
 websockets but not net (for example a browser), as long as a server speaks at least
 one protocol that a peer can understand, then they can communicate.
 
-## plugins implemented so far
+## scopes
 
-### `net = require('multiserver/plugins/net')`
+address also have a scope. This relates to where they
+can be connected to. default supported scopes are
+
+* device - can connect only if on the same device
+* local - can connect from same wifi (local network)
+* public - can connect from public global internet.
+
+some transport plugins work only on particular scopes.
+
+when `stringify(scope)` is called, it will return
+just the accessable addresses in that scope.
+
+## plugins
+
+A multiserver instance is set up by composing a selection
+of plugins that construct the networking transports,
+and transforms that instance supports.
+
+There are two types of plugins, transports and transforms.
+
+### `net({port,host,scope})`
 
 TCP is a `net:{host}:{port}` port is not optional.
 
-### `ws = require('multiserver/plugins/ws`)
+``` js
+var Net = require('multiserver/plugins/net')`
+Net({port: 8889, host: 'mydomain.com'}) => net
+net.stringify() => 'net:mydomain.com:8889'
+```
+### `WebSockets({host,port,scope,handler?})`
+
+create a websocket server. Since websockets are
+just a special mode of http, this also creates a http
+server. If `opts.handler` is provided, requests
+to the http server can be handled, this is optional.
 
 WebSockets `ws://{host}:{port}?` port defaults to 80 if not provided.
 
 WebSockets over https is `wss://{host}:{port}?` where port is
 443 if not provided.
+
+``` js
+var WebSockets = require('multiserver/plugins/ws`)
+
+var ws = WebSockets({
+  port: PORT,
+  host: HOST,
+  handler: function (req, res) {
+    res.end('<h1>hello</h1>')
+  },
+  scope:...
+})
+
+ws.stringify() => 'ws://HOST:PORT'
+```
 
 ### `onion = require('multiserver/plugins/onion)`
 
@@ -257,17 +302,75 @@ but generally it's unlikely that protocols should not fail independently
 an example of a valid multiprotocol:
 `net:{host}:{port}~shs:{key};ws:{host}:{port}~shs:{key}`
 
+## interfaces
 
+To construct a useful multiserver instance,
+one or more transport is each connected with zero
+or more transforms. The combine function is
+the default export from the `multiserver` module.
 
-### TODO
+``` js
+var MultiServer = require('multiserver')
 
-A short list of other protocols which could be implemented:
+var ms = MultiServer([
+  [transport1, transform1],
+  [transport2, transform2, transform3],
+])
 
-* cjdns
-* other encryption protocols...
+var close = ms.server(function (stream) {
+  //called when a stream connects
+}, onError, onListening)
+```
 
+```
+createMultiServer([[Transform, Transports*,...]], *]) => MultiServer
+```
+
+a MultiServer has the same interface as a Transport,
+but using a combined multiserver instance as a transport
+is **not** supported.
+
+## createTransport(Options) => Transport
+
+The transport exposes a name and the ability to
+create and connect to servers running that transport.
+
+``` js
+Transport => {
+  // that describes the sub protocols
+  name,
+  // connect to server with address addr.
+  client (addr, cb),
+  // start the server
+  server (onConnect, onError, onListening),
+  // return string describing how to connect to the server, aka, "the address"
+  // the address applies to a `scope`.
+  stringify(scope),
+  // parse the addr,
+  // normally this would probably return the
+  // Options used to create the transport.
+  parse(string) => Options
+}
+```
+
+## createTransform(options) => Transform
+
+``` js
+Transform => {
+  name: string,
+  create(Options) => (stream, cb(null, transformed_stream)),
+  parse (str) => Options,
+  stringify() => string,
+}
+```
+
+note the create method on a Transform takes Options,
+and returns a function that takes a stream and a callback,
+and then calls back the transformed stream.
+In all cases the stream is a [duplex stream](https://github.com/pull-stream/pull-stream)
 
 ## License
 
 MIT
+
 
