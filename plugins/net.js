@@ -3,8 +3,9 @@ try {
   net = require('net')
 } catch (_) {
   // This only throws in browsers because they don't have access to the Node
-  // net library, which is safe to ignore because they should only be running
-  // `parse()` and `stringify()`.
+  // net library, which is safe to ignore because they shouldn't be running
+  // any methods that require the net library. Maybe we should be setting a
+  // flag somewhere rather than checking whether `net == null`?
 }
 
 var toPull = require('stream-to-pull-stream')
@@ -25,12 +26,11 @@ function toDuplex (str) {
 const getRandomPort = () =>
   Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
 
-module.exports = ({ scope, host, port, external, allowHalfOpen, pauseOnConnect }) => {
+module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pauseOnConnect }) => {
   // Arguments are `scope` and `external` plus selected options for
   // `net.createServer()` and `server.listen()`.
-  scope = scope || 'device'
-  port = port || getRandomPort()
   host = host || (isString(scope) && scopes.host(scope))
+  port = port || getRandomPort()
 
   function isAllowedScope (s) {
     return s === scope || Array.isArray(scope) && scope.includes(s)
@@ -43,9 +43,10 @@ module.exports = ({ scope, host, port, external, allowHalfOpen, pauseOnConnect }
       debug('Listening on %s:%d', host, port)
 
       // TODO: We convert `allowHalfOpen` to boolean for legacy reasons, this
-      // should be removed when multiserver undergoes a major version change.
+      // might not be getting used anywhere but I'm too scared to change it.
+      // This should probably be removed when we do a major version bump.
       const serverOpts = {
-        allowHalfOpen: !!allowHalfOpen,
+        allowHalfOpen: Boolean(allowHalfOpen),
         pauseOnConnect
       }
 
@@ -84,11 +85,11 @@ module.exports = ({ scope, host, port, external, allowHalfOpen, pauseOnConnect }
     },
     //MUST be net:<host>:<port>
     parse: function (s) {
-      if(!net) return null
+      if (net == null) return null
       var ary = s.split(':')
       if(ary.length < 3) return null
       if('net' !== ary.shift()) return null
-      var port = +ary.pop()
+      var port = Number(ary.pop())
       if(isNaN(port)) return null
       return {
         name: 'net',
@@ -96,9 +97,7 @@ module.exports = ({ scope, host, port, external, allowHalfOpen, pauseOnConnect }
         port: port
       }
     },
-    stringify: function (targetScope) {
-      targetScope = scope || 'device'
-
+    stringify: function (targetScope = 'device') {
       if (isAllowedScope(targetScope) === false) {
         return null
       }
