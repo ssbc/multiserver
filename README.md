@@ -326,9 +326,9 @@ and a `remote` property (the id of remote key).
 ### `Noauth({keys})`
 
 This authenticates any connection without any encryption.
-This should only be used on local connections,
+This should only be used on `device` scoped connections,
 such as if net is bound strictly to localhost,
-or a unix-socket. do not use with ws or net bound to public addresses.
+or a unix-socket. Do not use with ws or net bound to public addresses.
 
 ``` js
 var Noauth = require('multiserver/plugins/noauth')
