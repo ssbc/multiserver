@@ -78,7 +78,6 @@ tape('connect to either server', function (t) {
 })
 
 tape('connect to either server', function (t) {
-
   multi_ws.client(server_addr, function (err, stream) {
     if(err) throw err
     t.ok(/^ws/.test(client_addr), 'client connected via ws')
@@ -96,7 +95,6 @@ tape('connect to either server', function (t) {
 })
 
 tape('connect to either server', function (t) {
-
   multi_net.client(server_addr, function (err, stream) {
     if(err) throw err
     t.ok(/^net/.test(client_addr), 'client connected via net')
