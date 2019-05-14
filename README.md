@@ -5,7 +5,7 @@ and multiple transforms of those protocols (eg, security layer)
 
 ## motivation
 
-Developing a p2p system is hard. especially hard is upgrading protocol layers.
+Developing a p2p system is hard. Especially hard is upgrading protocol layers.
 The contemporary approach is to [update code via a backdoor](https://whispersystems.org/blog/the-ecosystem-is-moving/),
 but as easily as security can be added, [it can be taken away](https://nakamotoinstitute.org/trusted-third-parties/).
 
@@ -15,17 +15,17 @@ probably encrypted with some encryption scheme, possibly
 compression or other layers too.
 
 Usually, two peers connect over a standard networking transport
-(probably tcp) then they have a negioation to decide
+(probably tcp) then they have a negotiation to decide
 what the next layer (of encryption, for example) should be.
 This allows protocol implementators to roll out improved
 versions of the encryption protocol. However, it does
-not allow them to upgrade the negioation protocol!
-If a negioation protocol has a vulnerability it's much
-harder to fix, and since the negioation needs to be unencrypted,
+not allow them to upgrade the negotiation protocol!
+If a negotiation protocol has a vulnerability it's much
+harder to fix, and since the negotiation needs to be unencrypted,
 it tends to reveal a lot about program the server is running.
 
-Some HTTP APIs provide upgradability a better, simpler way.
-By putting a version number within the url. A new version of
+Some HTTP APIs provide upgradability in a better, simpler way by 
+putting a version number within the url. A new version of
 the API can then be used without touching the old one at all.
 
 multiserver adapts this approach to lower level protocols.
@@ -35,18 +35,18 @@ protocols side by side, and consider the protocol part of the address.
 Most network systems have some sort of address look up,
 there is peer identifier (such it's domain) and then
 a system that is queried to map that domain to the lower level
-network address (such as it's ip address, retrived via a DNS (Domain Name System) request)
+network address (such as it's ip address, retrieved via a DNS (Domain Name System) request)
 To connect to a website secured with https, first
 you look up the domain via DNS, then connect to the server.
 Then start a tls connection to that server, in which
-a cyphersuite is negioated, and a certificate is provided
+a cyphersuite is negotiated, and a certificate is provided
 by the server. (this certifies that the server really
 owns that domain)
 
 If it was using multiserver, DNS would respond with a list of cyphersuites,
-(encoded as multiserver addresses) and then you'd connect directly to a server and start using the protocol, without negioation.
+(encoded as multiserver addresses) and then you'd connect directly to a server and start using the protocol, without negotiation.
 p2p systems like scuttlebutt also usually have a lookup,
-but usally mapping from a public key to an ip address.
+but usually mapping from a public key to an ip address.
 Since a look up is needed anyway, it's a good place
 to provide information about the protocol that server speaks!
 
@@ -129,7 +129,7 @@ but can't create TCP servers that other desktop computers can connect to reliabl
 Browsers can use WebSockets and WebRTC.
 WebRTC gives you p2p, but needs an introducer.
 Another option is [utp](https://github.com/mafintosh/utp-native)
-- probably the most convienent, because it doesn't need an introducer
+- probably the most convenient, because it doesn't need an introducer
 on _every connection_ (but it does require some bootstrapping),
 but that doesn't work in the browser either.
 
@@ -199,7 +199,7 @@ one protocol that a peer can understand, then they can communicate.
 ## scopes
 
 address also have a scope. This relates to where they
-can be connected to. default supported scopes are
+can be connected to. Default supported scopes are:
 
 * device - can connect only if on the same device
 * local - can connect from same wifi (local network)
@@ -208,7 +208,7 @@ can be connected to. default supported scopes are
 some transport plugins work only on particular scopes.
 
 when `stringify(scope)` is called, it will return
-just the accessable addresses in that scope.
+just the accessible addresses in that scope.
 
 ## plugins
 
