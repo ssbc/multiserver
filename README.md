@@ -256,12 +256,13 @@ ws.stringify() => 'ws://mydomain.com:1234'
 
 ### `Onion()`
 
-Connect over tor using local proxy (9050).
-the tor ports are unconfigurable. the standard
+Connect over tor using local proxy to dæmon (9050) or tor browser (9150). 
+Both will be tried to find a suitable tor instance. 
+The tor ports are unconfigurable. The standard
 tor ports are always used.
 
-Also, this plugin does not support creating a server.
-You should use tor's configuration to set up a net
+This plugin does not support creating a server.
+You should use tor's configuration files to send incoming connections to a `net`
 instance as a hidden service.
 
 An accepted onion address looks like: `onion:{host}:{port}`
