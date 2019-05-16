@@ -23,8 +23,9 @@ not allow them to upgrade the negotiation protocol!
 If a negotiation protocol has a vulnerability it's much
 harder to fix, and since the negotiation needs to be unencrypted,
 it tends to reveal a lot about program the server is running.
+[in my opinion, it's time to try a different way.](https://github.com/ipfs/go-ipfs/pull/34)
 
-Some HTTP APIs provide upgradability in a better, simpler way by 
+Some HTTP APIs provide upgradability in a better, simpler way by
 putting a version number within the url. A new version of
 the API can then be used without touching the old one at all.
 
@@ -458,6 +459,7 @@ In all cases the stream is a [duplex stream](https://github.com/pull-stream/pull
 ## License
 
 MIT
+
 
 
 
