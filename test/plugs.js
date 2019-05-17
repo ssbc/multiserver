@@ -47,6 +47,10 @@ tape('parse, stringify', function (t) {
     'net:localhost:4848'
   )
   t.equal(
+    net.stringify('device'),
+    'net:localhost:4848'
+  )
+  t.equal(
     ws.stringify('device'),
     'ws://localhost:4848'
   )
@@ -423,6 +427,33 @@ tape('multiple scopes different hosts', function(t) {
     MultiServer([combined1, combined2]).stringify('public'),
     [combined1.stringify('public'), combined2.stringify('public')].join(';')
   )
+
+  t.end()
+})
+
+tape('meta-address returns multiple', function(t) {
+  var net = Net({ host: '::', port: 4848, scope: ['local', 'device', 'public']})
+
+  var combined = Compose([net, shs])
+ 
+  t.equal(
+    combined.stringify('local').split(';').length > 1,
+    true
+  )
+
+  // TODO: add more tests here
+  //
+  // This is currently doing all the right things but I'm unclear on how we
+  // should test for this behavior:
+  //
+  // ```javascript
+  // console.log(combined.stringify('local')).split(';').join('\n') // =>
+  //   net:192.168.3.55:4848~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=
+  //   net:172.18.0.1:4848~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=
+  //   net:fce2:9811:4862:81a7:bb08:91d6:2e41:d220:4848~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=
+  // ```
+  // 
+  // Now the net plugin can output multiple interfaces via `stringify()`!
 
   t.end()
 })

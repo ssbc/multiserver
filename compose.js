@@ -50,10 +50,35 @@ function asyncify(f) {
   }
 }
 
+
+// This accepts an array of arrays and outputs a combination of their layers.
+//
+// combineLayers([ [ 1, 2 ], [ 3, 4] ]) // => [
+//   [ 1, 3 ],
+//   [ 1, 4 ],
+//   [ 2, 3 ],
+//   [ 2, 4 ]
+// ]
+//
+// This is used for combining plugin layers, like when the net plugin is
+// listening on multiple addresses and we want to make sure that we combine
+// all of the addresses with all of the transforms when we stringify.
+//
+// combineLayers([ [ 'net:a', 'net:b' ], [ 'shs:c' ] ]) // => [
+//   [ 'net:a', 'shs:c' ],
+//   [ 'net:b', 'shs:c' ]
+// ]
+const combineLayers = x =>
+  x.reduce((acc, group = []) =>
+    acc.map(chain =>
+      group.map((item) =>
+        chain.concat(item))
+    ).flat(), [[]])
+
 module.exports = function (ary, wrap) {
   if(!wrap) wrap = function (e) { return e }
-  var proto = head(ary)
-  var trans = tail(ary)
+  var protocol = head(ary)
+  var transform = tail(ary)
 
   function parse (str) {
     var parts = SE.parse(str)
@@ -67,20 +92,20 @@ module.exports = function (ary, wrap) {
   }
 
   function parseMaybe (str) {
-    return  isString(str) ? parse(str) : str
+    return  isString(str) ? parse(str.split(';')[0]) : str
   }
 
   return {
     name: ary.map(function (e) { return e.name }).join(separator),
-    scope: proto.scope,
+    scope: protocol.scope,
     client: function (_opts, cb) {
       var opts = parseMaybe(_opts)
       if(!opts) return cb(new Error('could not parse address:'+_opts))
-      return proto.client(head(opts), function (err, stream) {
+      return protocol.client(head(opts), function (err, stream) {
         if(err) return cb(err)
         compose(
           wrap(stream),
-          trans.map(function (tr, i) { return tr.create(opts[i+1]) }),
+          transform.map(function (tr, i) { return tr.create(opts[i+1]) }),
           cb
         )
       })
@@ -93,10 +118,10 @@ module.exports = function (ary, wrap) {
         console.error('server error, from', err.address)
         console.error(err.stack)
       }
-      return asyncify(proto.server(function (stream) {
+      return asyncify(protocol.server(function (stream) {
         compose(
           wrap(stream),
-          trans.map(function (tr) { return tr.create() }),
+          transform.map(function (tr) { return tr.create() }),
           function (err, stream) {
             if(err) onError(err)
             else onConnection(stream)
@@ -107,13 +132,19 @@ module.exports = function (ary, wrap) {
     parse: parse,
     stringify: function (scope) {
       var none
-      var _ary = ary.map(function (e) {
-        var v = e.stringify(scope)
+
+      var identifierAry = combineLayers(ary.map(function (item) {
+        var v = item.stringify(scope)
+        if (typeof v === 'string') {
+          v = v.split(';')
+        }
+
         if(!v) none = true
         else return v
-      })
+      }))
+
       if(none) return
-      return SE.stringify(_ary)
+      return identifierAry.map(id => SE.stringify(id)).join(';')
     }
   }
 }

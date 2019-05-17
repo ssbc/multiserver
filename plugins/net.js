@@ -1,6 +1,8 @@
 var net
+var os
 try {
   net = require('net')
+  os = require('os')
 } catch (_) {
   // This only throws in browsers because they don't have access to the Node
   // net library, which is safe to ignore because they shouldn't be running
@@ -21,6 +23,42 @@ function toDuplex (str) {
   return stream
 }
 
+const metaAddresses = [
+  '0.0.0.0',
+  '::'
+]
+
+const getAddress = (host, scope) => {
+  if (scope === 'device') {
+    return 'localhost' // legacy
+  }
+
+  if (typeof host === 'string' && metaAddresses.includes(host) === false) {
+    return host
+  }
+
+  return getNetworkAddresses({
+    internal: (scope === 'device'),
+    family: (host === '0.0.0.0' ? 'IPv4' : null)
+  })
+}
+
+const getNetworkAddresses = ({ internal, family } = {}) =>
+  Object.values(os.networkInterfaces())
+    // Flatten
+    .reduce((acc, val) => acc.concat(val), [])
+    // Filter `internal`
+    .filter(item => internal == null || item.internal === internal)
+    // Filter `family`
+    .filter(item => family == null || item.family === family)
+    // Filter scoped IPv6 addresses, which don't play nicely with Node.js
+    .filter(item => item.scopeid == null || item.scopeid === 0)
+    // Only return the address.
+    .map(item => item.address)
+
+// console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+// console.dir(getNetworkAddresses({ family: 'IPv4' }), { depth: null })
+
 // Choose a dynamic port between 49152 and 65535
 // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
 const getRandomPort = () =>
@@ -29,7 +67,7 @@ const getRandomPort = () =>
 module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pauseOnConnect }) => {
   // Arguments are `scope` and `external` plus selected options for
   // `net.createServer()` and `server.listen()`.
-  host = host || (isString(scope) && scopes.host(scope))
+  host = getAddress(host, scope)
   port = port || getRandomPort()
 
   function isAllowedScope (s) {
@@ -105,14 +143,20 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
       // We want to avoid using `host` if the target scope is public and some
       // external host (like example.com) is defined.
       const externalHost = targetScope === 'public' && external
-      const resultHost = externalHost || host || scopes.host(targetScope)
+      const resultHost = externalHost || getAddress(host, targetScope)
+
+      // console.log({ resultHost })
 
       if (resultHost == null) {
         // The device has no network interface for a given `targetScope`.
         return null
       }
 
-      return toAddress(resultHost, port)
+      if (Array.isArray(resultHost)) {
+        return resultHost.map(addr => toAddress(addr, port)).join(';')
+      } else {
+        return toAddress(resultHost, port)
+      }
     }
   }
 }

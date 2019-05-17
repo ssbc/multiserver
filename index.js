@@ -61,8 +61,9 @@ module.exports = function (plugs, wrap) {
       if (!scope) scope = 'device'
       return plugs
         .filter(function (plug) {
-          var _scope = plug.scope()
-          return Array.isArray(_scope) ? ~_scope.indexOf(scope) : _scope === scope
+          var plugScope = plug.scope()
+          const isArray = Array.isArray(plugScope)
+          return  isArray ? plugScope.includes(scope) : plugScope === scope
         })
         .map(function (plug) { return plug.stringify(scope) })
         .filter(Boolean)
