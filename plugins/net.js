@@ -56,9 +56,6 @@ const getNetworkAddresses = ({ internal, family } = {}) =>
     // Only return the address.
     .map(item => item.address)
 
-// console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-// console.dir(getNetworkAddresses({ family: 'IPv4' }), { depth: null })
-
 // Choose a dynamic port between 49152 and 65535
 // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
 const getRandomPort = () =>
