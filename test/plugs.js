@@ -133,30 +133,37 @@ tape('combined, ipv6', function (t) {
 })
 
 tape('net: do not listen on all addresses', function (t) {
+  // This starts a server listening on localhost and then calls `stringify()`
+  // on a "fake" server configured to listen on the local scope (LAN). This
+  // fake server is never started, so when we attempt connection to it then
+  // as long as we get an error then we can be sure the real server is only
+  // listening on localhost.
+
   var combined = Compose([
     Net({
       scope: 'device',
       port: 4848,
       host: 'localhost',
-//      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
     shs
   ])
+
+  // This starts the server.
   var close = combined.server(echo)
 
-  //fake
-  var fake_combined = Compose([
+  // this server should never be started, we 
+  var fakeLocal = Compose([
     Net({
       scope: 'local',
       port: 4848,
-      //host: 'localhost',
-//      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
     shs
   ])
 
-  var addr = fake_combined.stringify('local') // returns external
+
+  var addr = fakeLocal.stringify('local') // returns LAN addresses
   console.log('addr local scope', addr)
+
   combined.client(addr, function (err, stream) {
     t.ok(err, 'should only listen on localhost')
     close(function() {t.end()})
@@ -433,11 +440,21 @@ tape('multiple scopes different hosts', function(t) {
 
 tape('meta-address returns multiple', function(t) {
   var net = Net({ host: '::', port: 4848, scope: ['local', 'device', 'public']})
+  var ws = Ws({ host: '::', port: 4848, scope: ['local', 'device', 'public']})
 
-  var combined = Compose([net, shs])
+  var combinedNet = Compose([net, shs])
+  var combinedWs = Compose([ws, shs])
+
+  console.log(combinedNet.stringify('local').split(';'))
+  console.log(combinedWs.stringify('local').split(';'))
  
   t.equal(
-    combined.stringify('local').split(';').length > 1,
+    combinedNet.stringify('local').split(';').length > 1,
+    true
+  )
+
+  t.equal(
+    combinedWs.stringify('local').split(';').length > 1,
     true
   )
 

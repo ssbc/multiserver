@@ -1,13 +1,16 @@
-var WS = require('pull-ws')
-var URL = require('url')
-var pull = require('pull-stream/pull')
-var Map = require('pull-stream/throughs/map')
-var scopes = require('multiserver-scopes')
-var http = require('http')
-var debug = require('debug')('multiserver:ws')
+const WS = require('pull-ws')
+const URL = require('url')
+const pull = require('pull-stream/pull')
+const Map = require('pull-stream/throughs/map')
+const http = require('http')
+const debug = require('debug')('multiserver:ws')
+
+const {
+  getAddresses,
+  getRandomPort,
+} = require('../lib/util')
 
 function safe_origin (origin, address, port) {
-
   //if the connection is not localhost, we shouldn't trust
   //the origin header. So, use address instead of origin
   //if origin not set, then it's definitely not a browser.
@@ -25,13 +28,7 @@ function safe_origin (origin, address, port) {
   //a connection from the browser on localhost,
   //we choose to trust this came from a browser.
   return origin.replace(/^http/, 'ws')
-
 }
-
-// Choose a dynamic port between 49152 and 65535
-// https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
-const getRandomPort = () =>
-  Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
 
 module.exports = function (opts = {}) {
   // This takes options for `WebSocket.Server()`:
@@ -53,7 +50,8 @@ module.exports = function (opts = {}) {
         return null
       }
 
-      // Maybe weird: this sets a random port each time that `server()` is run
+      // Maybe weird: this sets a random port each time that `server()`
+      // is run
       // whereas the net plugin sets the port when the outer function is run.
       //
       // This server has a random port generated at runtime rather than when
@@ -113,32 +111,37 @@ module.exports = function (opts = {}) {
       }
     },
     stringify: function (targetScope = 'device') {
+      // Immediately return in browsers (why?)
       if (WS.createServer == null) {
         return null
       }
+      // Immediately return if target scope isn't allowed by interface
       if (isAllowedScope(targetScope) === false) {
         return null
       }
 
       const port = opts.server ? opts.server.address().port : opts.port
-      const externalHost = targetScope === 'public' && opts.external
-      const resultHost = externalHost || opts.host || scopes.host(targetScope)
+      const isPublic = targetScope === 'public' && opts.external != null
+      const targetHost = isPublic ? opts.external : opts.host
+      const addresses = getAddresses(targetHost, targetScope)
 
-      if (resultHost == null) {
+      if (addresses.length === 0) {
         // The device has no network interface for a given `targetScope`.
         return null
       }
 
-      return URL.format({
-        protocol: secure ? 'wss' : 'ws',
-        slashes: true,
-        hostname: resultHost,
-        port: (secure ? port == 443 : port == 80) ? undefined : port
-      })
+      return addresses.map(addr =>
+        URL.format({
+          protocol: secure ? 'wss' : 'ws',
+          slashes: true,
+          hostname: addr,
+          port: (secure ? port == 443 : port == 80) ? undefined : port
+        })
+      ).join(';')
     },
     parse: function (str) {
       var addr = URL.parse(str)
-      if(!/^wss?\:$/.test(addr.protocol)) return null
+      if(!/^wss?:$/.test(addr.protocol)) return null
       return addr
     }
   }

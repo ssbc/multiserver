@@ -1,10 +1,10 @@
 const toPull = require('stream-to-pull-stream')
 const debug = require('debug')('multiserver:net')
 const {
-  getAddress,
+  getAddresses,
   getRandomPort,
   protocolToAddress
-} = require('../lib/util.js')
+} = require('../lib/util')
 
 var net
 try {
@@ -24,7 +24,7 @@ function toDuplex (str) {
 module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pauseOnConnect }) => {
   // Arguments are `scope` and `external` plus selected options for
   // `net.createServer()` and `server.listen()`.
-  host = getAddress(host, scope)
+  host = host || getAddresses(host, scope)
   port = port || getRandomPort()
 
   function isAllowedScope (s) {
@@ -93,27 +93,23 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
       }
     },
     stringify: function (targetScope = 'device') {
+      // Check scope to ensure it's allowed on this interface.
       if (isAllowedScope(targetScope) === false) {
         return null
       }
 
-      // We want to avoid using `host` if the target scope is public and some
-      // external host (like example.com) is defined.
-      const externalHost = targetScope === 'public' && external
-      const resultHost = externalHost || getAddress(host, targetScope)
+      // Give priority to `external` if targeting public scope.
+      const isPublic = targetScope === 'public' && external != null
+      const targetHost = isPublic ? external : host
 
-      // console.log({ resultHost })
+      const addresses = getAddresses(targetHost, targetScope)
 
-      if (resultHost == null) {
+      if (addresses.length === 0) {
         // The device has no network interface for a given `targetScope`.
         return null
       }
 
-      if (Array.isArray(resultHost)) {
-        return resultHost.map(addr => toAddress(addr, port)).join(';')
-      } else {
-        return toAddress(resultHost, port)
-      }
+      return addresses.map(addr => toAddress(addr, port)).join(';')
     }
   }
 }
