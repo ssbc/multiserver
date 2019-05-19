@@ -3,12 +3,14 @@ var net = require('net')
 var fs = require('fs')
 var path = require('path')
 var debug = require('debug')('multiserver:unix')
+const os = require('os')
 
 // hax on double transform
 var started = false
 
 module.exports = function (opts) {
-  const socket = path.join(opts.path || '', 'socket')
+  opts.path = opts.path ||  fs.mkdtempSync(path.join(os.tmpdir(), 'multiserver-'))
+  const socket = path.join(opts.path, 'socket')
   const addr = 'unix:' + socket
   let scope = opts.scope || 'device'
   opts = opts || {}
