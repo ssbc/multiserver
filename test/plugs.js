@@ -188,12 +188,9 @@ tape('net: do not crash if listen() fails', function(t) {
 })
 
 tape('combined, unix', function (t) {
-  var p = 'multiunixtest'+(new Date()).getTime()
-  fs.mkdirSync(p)
   var combined = Compose([
     Unix({
       server: true,
-      path: p,
     }),
     shs
   ])
@@ -211,7 +208,6 @@ tape('combined, unix', function (t) {
         if(err) throw err
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
         close(function() {
-          fs.rmdirSync(p)
           t.end()
         })
       })
