@@ -4,7 +4,7 @@ var pull = require('pull-stream')
 var Pushable = require('pull-pushable')
 var scopes = require('multiserver-scopes')
 
-var Compose = require('../compose')
+var Compose = require('../lib/compose')
 var Net = require('../plugins/net')
 var Unix = require('../plugins/unix-socket')
 var Ws = require('../plugins/ws')

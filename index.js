@@ -1,4 +1,4 @@
-var compose = require('./compose')
+var compose = require('./lib/compose')
 var isArray = Array.isArray
 var multicb = require('multicb')
 
