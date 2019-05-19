@@ -31,7 +31,7 @@ module.exports = function (opts) {
       cb(new Error("Use net plugin for onion server instead"))
     },
     client: function (opts, cb) {
-      var started = false, _socket, destroy
+      var _socket, destroy
 
       function tryConnect(connectOpts, onFail) {
         socks.createConnection(connectOpts, function(err, result) {

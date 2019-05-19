@@ -1,8 +1,7 @@
-var fs = require('fs')
 var tape = require('tape')
 var pull = require('pull-stream')
 var Pushable = require('pull-pushable')
-var scopes = require('multiserver-scopes')
+const fs = require('fs')
 
 var Compose = require('../compose')
 var Net = require('../plugins/net')
@@ -17,20 +16,14 @@ var seed = cl.crypto_hash_sha256(Buffer.from('TESTSEED'))
 var keys = cl.crypto_sign_seed_keypair(seed)
 var appKey = cl.crypto_hash_sha256(Buffer.from('TEST'))
 
-var requested, ts
-
 //this gets overwritten in the last test.
 var check = function (id, cb) {
   cb(null, true)
 }
 
-//var net = Net({port: 4848, scope: 'device'})
 var net = Net({port: 4848})
 var ws = Ws({port: 4848})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
-  requested = id
-  ts = Date.now()
-
   check(id, cb)
 }})
 
@@ -425,9 +418,8 @@ tape('error should have client address on it', function (t) {
   var close = combined.server(function (stream) {
     throw new Error('should never happen')
   }, function (err) {
-    var addr = err.address
-    t.ok(/^net\:/.test(err.address))
-    t.ok(/\~shs\:/.test(err.address))
+    t.ok(/^net:/.test(err.address))
+    t.ok(/~shs:/.test(err.address))
     //the shs address won't actually parse, because it doesn't have the key in it
     //because the key is not known in a wrong number.
   }, function () {
