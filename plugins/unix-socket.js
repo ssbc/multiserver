@@ -48,7 +48,9 @@ module.exports = function (opts) {
       })
 
       if (process.platform !== 'win32') {
-        fs.chmodSync(socket, 0600)
+        // mode is set to allow read and write
+        const mode = fs.constants.S_IRUSR + fs.constants.S_IWUSR
+        fs.chmodSync(socket, mode)
       }
 
       started = true
