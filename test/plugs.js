@@ -2,6 +2,7 @@ var tape = require('tape')
 var pull = require('pull-stream')
 var Pushable = require('pull-pushable')
 const fs = require('fs')
+const { getAddresses } = require('../lib/util')
 
 var Compose = require('../lib/compose')
 var Net = require('../plugins/net')
@@ -440,29 +441,17 @@ tape('meta-address returns multiple', function(t) {
   console.log(combinedNet.stringify('local').split(';'))
   console.log(combinedWs.stringify('local').split(';'))
  
+  const addressCount = getAddresses('::', 'local').length
+
   t.equal(
-    combinedNet.stringify('local').split(';').length > 1,
-    true
+    combinedNet.stringify('local').split(';').length,
+    addressCount
   )
 
   t.equal(
-    combinedWs.stringify('local').split(';').length > 1,
-    true
+    combinedWs.stringify('local').split(';').length,
+    addressCount
   )
-
-  // TODO: add more tests here
-  //
-  // This is currently doing all the right things but I'm unclear on how we
-  // should test for this behavior:
-  //
-  // ```javascript
-  // console.log(combined.stringify('local').split(';').join('\n')) // =>
-  //   net:192.168.3.55:4848~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=
-  //   net:172.18.0.1:4848~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=
-  //   net:fce2:9811:4862:81a7:bb08:91d6:2e41:d220:4848~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=
-  // ```
-  // 
-  // Now the net plugin can output multiple interfaces via `stringify()`!
 
   t.end()
 })
