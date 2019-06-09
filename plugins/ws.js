@@ -96,7 +96,7 @@ module.exports = function (opts) {
       stream.address = addr
 
       return function () {
-        stream.close(cb)
+        stream.close()
       }
     },
     stringify: function (scope) {
@@ -127,7 +127,3 @@ module.exports = function (opts) {
     }
   }
 }
-
-
-
-
