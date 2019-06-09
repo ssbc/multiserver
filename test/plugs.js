@@ -312,34 +312,44 @@ tape('onion plug', function (t) {
   t.end()
 })
 
-tape('id of stream from server', function (t) {
-  check = function (id, cb) {
-    cb(null, true)
-  }
-  var close = combined.server(function (stream) {
-    var addr = combined.parse(stream.address)
-    t.ok(addr)
-    console.log('address as seen on server', addr)
-    t.equal(addr[0].name, 'net')
-    t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
-
-    pull(stream.source, stream.sink) //echo
-  }, function (err) {
-    if(err) throw err
-  }, function () {
-
-    combined.client(combined.stringify(), function (err, stream) {
-      if(err) throw err
+function testServerId(combined, name, port) {
+  tape('id of stream from server', function (t) {
+    check = function (id, cb) {
+      cb(null, true)
+    }
+    var close = combined.server(function (stream) {
+      console.log('raw address on server:', stream.address)
       var addr = combined.parse(stream.address)
-      t.equal(addr[0].name, 'net')
-      t.equal(addr[0].port, 4848)
+      t.ok(addr)
+      console.log('address as seen on server', addr)
+      t.equal((addr[0].name || addr[0].protocol).replace(':', ''), name)
       t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
-      stream.source(true, function () {
-        close(function() {t.end()})
+
+      pull(stream.source, stream.sink) //echo
+    }, function (err) {
+      if(err) throw err
+    }, function () {
+
+      combined.client(combined.stringify(), function (err, stream) {
+        if(err) throw err
+        var addr = combined.parse(stream.address)
+        t.equal((addr[0].name || addr[0].protocol).replace(':', ''), name)
+        t.equal(+addr[0].port, 4848)
+        t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
+        stream.source(true, function () {
+          close(function() {t.end()})
+        })
       })
     })
   })
-})
+
+}
+
+testServerId(combined, 'net')
+testServerId(combined_ws, 'ws')
+
+
+
 
 function testAbort (name, combined) {
 
@@ -350,7 +360,7 @@ function testAbort (name, combined) {
 
     var abort = combined.client(combined.stringify(), function (err, stream) {
       t.ok(err)
-
+      console.error("CLIENT ABORTED", err)
       // NOTE: without the timeout, we try to close the server
       // before it actually started listening, which fails and then
       // the server keeps runnung, causing the next test to fail with EADDRINUSE
@@ -363,37 +373,41 @@ function testAbort (name, combined) {
     })
     
     abort()
-
   })
 }
 
 testAbort('combined', combined)
 testAbort('combined.ws', combined_ws)
 
-tape('error should have client address on it', function (t) {
-//  return t.end()
-  check = function (id, cb) {
-    throw new Error('should never happen')
-  }
-  var close = combined.server(function (stream) {
-    throw new Error('should never happen')
-  }, function (err) {
-    var addr = err.address
-    t.ok(/^net\:/.test(err.address))
-    t.ok(/\~shs\:/.test(err.address))
-    //the shs address won't actually parse, because it doesn't have the key in it
-    //because the key is not known in a wrong number.
-  }, function () {
+function testErrorAddress(combined, type) {
 
-    //very unlikely this is the address, which will give a wrong number at the server.
-    var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
-    combined.client(addr, function (err, stream) {
-      //client should see client auth rejected
-      t.ok(err)
-      console.log('Calling close')
-      close() // in this case, net.server.close(cb) never calls its cb, why?
-      t.end()
+  tape('error should have client address on it:' + type, function (t) {
+    check = function (id, cb) {
+      throw new Error('should never happen')
+    }
+    var close = combined.server(function (stream) {
+      throw new Error('should never happen')
+    }, function (err) {
+      var addr = err.address
+      t.ok(err.address.indexOf(type) == 0) //net or ws
+      t.ok(/\~shs\:/.test(err.address))
+      //the shs address won't actually parse, because it doesn't have the key in it
+      //because the key is not known in a wrong number.
+    }, function () {
+
+      //very unlikely this is the address, which will give a wrong number at the server.
+      var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
+      combined.client(addr, function (err, stream) {
+        //client should see client auth rejected
+        t.ok(err)
+        console.log('Calling close')
+        close() // in this case, net.server.close(cb) never calls its cb, why?
+        t.end()
+      })
     })
   })
-})
 
+}
+
+testErrorAddress(combined, 'net')
+testErrorAddress(combined_ws, 'ws')
