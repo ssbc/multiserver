@@ -411,3 +411,33 @@ function testErrorAddress(combined, type) {
 
 testErrorAddress(combined, 'net')
 testErrorAddress(combined_ws, 'ws')
+
+tape('multiple public different hosts', function(t) {
+  var net1 = Net({ host: '127.0.0.1', port: 4848, scope: 'public'})
+  var net2 = Net({ host: '::1', port: 4847, scope: 'public'})
+
+  var combined1 = Compose([net1, shs])
+  var combined2 = Compose([net2, shs])
+
+  t.equal(
+    MultiServer([combined1, combined2]).stringify('public'),
+    [combined1.stringify('public'), combined2.stringify('public')].join(';')
+  )
+
+  t.end()
+})
+
+tape('multiple scopes different hosts', function(t) {
+  var net1 = Net({ host: '127.0.0.1', port: 4848, scope: ['local', 'device', 'public']})
+  var net2 = Net({ host: '::1', port: 4847, scope: ['local', 'device', 'public']})
+
+  var combined1 = Compose([net1, shs])
+  var combined2 = Compose([net2, shs])
+
+  t.equal(
+    MultiServer([combined1, combined2]).stringify('public'),
+    [combined1.stringify('public'), combined2.stringify('public')].join(';')
+  )
+
+  t.end()
+})

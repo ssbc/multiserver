@@ -28,28 +28,41 @@ function safe_origin (origin, address, port) {
 
 }
 
-module.exports = function (opts) {
-  opts = opts || {}
-  opts.binaryType = (opts.binaryType || 'arraybuffer')
-  var scope = opts.scope || 'device'
-  function isScoped (s) {
+// Choose a dynamic port between 49152 and 65535
+// https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
+const getRandomPort = () =>
+  Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
+
+module.exports = function (opts = {}) {
+  // This takes options for `WebSocket.Server()`:
+  // https://github.com/websockets/ws/blob/master/doc/ws.md#new-websocketserveroptions-callback
+
+  opts.binaryType = opts.binaryType || 'arraybuffer'
+  const scope = opts.scope || 'device'
+
+  function isAllowedScope (s) {
     return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
   }
 
   var secure = opts.server && !!opts.server.key
   return {
     name: 'ws',
-    scope: function() { return opts.scope || 'device' },
+    scope: () => scope,
     server: function (onConnect, startedCb) {
+      if (WS.createServer == null) { 
+        return null
+      }
 
-      if(!WS.createServer) return
-      // Choose a dynamic port between 49152 and 65535
-      // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
-      opts.port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
+      // Maybe weird: this sets a random port each time that `server()` is run
+      // whereas the net plugin sets the port when the outer function is run.
+      //
+      // This server has a random port generated at runtime rather than when
+      // the interface is instantiated. Is that the way it should work?
+      opts.port = opts.port || getRandomPort()
 
       var server = opts.server || http.createServer(opts.handler)
 
-      var ws_server = WS.createServer(Object.assign({}, opts, {server: server}), function (stream) {
+      WS.createServer(Object.assign({}, opts, {server: server}), function (stream) {
         stream.address = safe_origin(
           stream.headers.origin,
           stream.remoteAddress,
@@ -99,24 +112,27 @@ module.exports = function (opts) {
         stream.close()
       }
     },
-    stringify: function (scope) {
-      scope = scope || 'device'
-      if(!isScoped(scope)) return null
-      if(!WS.createServer) return null
-      var port
-      if(opts.server)
-        port = opts.server.address().port
-      else
-        port = opts.port
+    stringify: function (targetScope = 'device') {
+      if (WS.createServer == null) {
+        return null
+      }
+      if (isAllowedScope(targetScope) === false) {
+        return null
+      }
 
-      var host = (scope == 'public' && opts.external) || scopes.host(scope)
-      //if a public scope was requested, but a public ip is not available, return
-      if(!host) return null
+      const port = opts.server ? opts.server.address().port : opts.port
+      const externalHost = targetScope === 'public' && opts.external
+      const resultHost = externalHost || opts.host || scopes.host(targetScope)
+
+      if (resultHost == null) {
+        // The device has no network interface for a given `targetScope`.
+        return null
+      }
 
       return URL.format({
         protocol: secure ? 'wss' : 'ws',
         slashes: true,
-        hostname: host,
+        hostname: resultHost,
         port: (secure ? port == 443 : port == 80) ? undefined : port
       })
     },

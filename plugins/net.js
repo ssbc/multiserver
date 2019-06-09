@@ -1,44 +1,56 @@
 var net
 try {
   net = require('net')
-} catch (_) {}
-
-function isString(s) {
-  return 'string' == typeof s
+} catch (_) {
+  // This only throws in browsers because they don't have access to the Node
+  // net library, which is safe to ignore because they shouldn't be running
+  // any methods that require the net library. Maybe we should be setting a
+  // flag somewhere rather than checking whether `net == null`?
 }
 
 var toPull = require('stream-to-pull-stream')
 var scopes = require('multiserver-scopes')
 var debug = require('debug')('multiserver:net')
 
+const isString = (s) => 'string' == typeof s
+const toAddress = (host, port) => ['net', host, port ].join(':')
+
 function toDuplex (str) {
   var stream = toPull.duplex(str)
-  stream.address = 'net:'+str.remoteAddress+':'+str.remotePort
+  stream.address = toAddress(str.remoteAddress, str.remotePort)
   return stream
 }
 
-module.exports = function (opts) {
-  // Choose a dynamic port between 49152 and 65535
-  // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
-  var port = opts.port || Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
-  //does this actually need to set host from the scope here?
-  var host = opts.host || (isString(opts.scope) && scopes.host(opts.scope))
-  var scope = opts.scope || 'device'
-  // FIXME: does this even work anymore?
-  opts.allowHalfOpen = opts.allowHalfOpen !== false
+// Choose a dynamic port between 49152 and 65535
+// https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
+const getRandomPort = () =>
+  Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
 
-  function isScoped (s) {
-    return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
+module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pauseOnConnect }) => {
+  // Arguments are `scope` and `external` plus selected options for
+  // `net.createServer()` and `server.listen()`.
+  host = host || (isString(scope) && scopes.host(scope))
+  port = port || getRandomPort()
+
+  function isAllowedScope (s) {
+    return s === scope || Array.isArray(scope) && scope.includes(s)
   }
 
   return {
     name: 'net',
-    scope: function() {
-      return scope
-    },
+    scope: () => scope,
     server: function (onConnection, startedCb) {
       debug('Listening on %s:%d', host, port)
-      var server = net.createServer(opts, function (stream) {
+
+      // TODO: We convert `allowHalfOpen` to boolean for legacy reasons, this
+      // might not be getting used anywhere but I'm too scared to change it.
+      // This should probably be removed when we do a major version bump.
+      const serverOpts = {
+        allowHalfOpen: Boolean(allowHalfOpen),
+        pauseOnConnect
+      }
+
+      var server = net.createServer(serverOpts, function (stream) {
         onConnection(toDuplex(stream))
       }).listen(port, host, startedCb)
       return function (cb) {
@@ -51,7 +63,6 @@ module.exports = function (opts) {
       }
     },
     client: function (opts, cb) {
-      var addr = 'net:'+opts.host+':'+opts.port
       var started = false
       var stream = net.connect(opts)
         .on('connect', function () {
@@ -74,11 +85,11 @@ module.exports = function (opts) {
     },
     //MUST be net:<host>:<port>
     parse: function (s) {
-      if(!net) return null
+      if (net == null) return null
       var ary = s.split(':')
       if(ary.length < 3) return null
       if('net' !== ary.shift()) return null
-      var port = +ary.pop()
+      var port = Number(ary.pop())
       if(isNaN(port)) return null
       return {
         name: 'net',
@@ -86,12 +97,22 @@ module.exports = function (opts) {
         port: port
       }
     },
-    stringify: function (scope) {
-      scope = scope || 'device'
-      if(!isScoped(scope)) return
-      var _host = (scope == 'public' && opts.external) || scopes.host(scope)
-      if(!_host) return null
-      return ['net', _host, port].join(':')
+    stringify: function (targetScope = 'device') {
+      if (isAllowedScope(targetScope) === false) {
+        return null
+      }
+
+      // We want to avoid using `host` if the target scope is public and some
+      // external host (like example.com) is defined.
+      const externalHost = targetScope === 'public' && external
+      const resultHost = externalHost || host || scopes.host(targetScope)
+
+      if (resultHost == null) {
+        // The device has no network interface for a given `targetScope`.
+        return null
+      }
+
+      return toAddress(resultHost, port)
     }
   }
 }
