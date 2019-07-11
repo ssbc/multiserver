@@ -105,12 +105,15 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
       // We want to avoid using `host` if the target scope is public and some
       // external host (like example.com) is defined.
       const externalHost = targetScope === 'public' && external
-      const resultHost = externalHost || host || scopes.host(targetScope)
+      let resultHost = externalHost || host || scopes.host(targetScope)
 
       if (resultHost == null) {
         // The device has no network interface for a given `targetScope`.
         return null
       }
+
+      // Remove IPv6 scopeid suffix, if any, e.g. `%wlan0`
+      resultHost = resultHost.replace(/(\%\w+)$/, '')
 
       return toAddress(resultHost, port)
     }
