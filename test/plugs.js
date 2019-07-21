@@ -128,6 +128,25 @@ tape('combined, ipv6', function (t) {
   })
 })
 
+if (has_ipv6)
+tape('stringify() does not show scopeid from ipv6', function (t) {
+  var combined = Compose([
+    Net({
+      scope: 'private',
+      port: 4848,
+      host: 'fe80::1065:74a4:4016:6266%wlan0'
+    }),
+    shs
+  ])
+  var addr = combined.stringify('private')
+  t.equal(
+    addr,
+    'net:fe80::1065:74a4:4016:6266:4848~shs:' +
+    keys.publicKey.toString('base64')
+  )
+  t.end()
+})
+
 tape('net: do not listen on all addresses', function (t) {
   var combined = Compose([
     Net({
@@ -361,7 +380,7 @@ function testAbort (name, combined) {
         close(function() {t.end()})
       }, 500)
     })
-    
+
     abort()
 
   })
