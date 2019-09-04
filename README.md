@@ -90,11 +90,11 @@ var ms = MultiServer([
     //this protocol doesn't exist yet, but it could.
     require('secret-handshake2')({
       keys: keys,
-      appKey: appKey //application key
+      appKey: appKey, //application key
       auth: accept_all
     }),
   ]
-]
+])
 
 console.log(ms.stringify())
 
