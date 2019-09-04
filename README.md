@@ -94,7 +94,7 @@ var ms = MultiServer([
       auth: accept_all
     }),
   ]
-]
+])
 
 console.log(ms.stringify())
 
