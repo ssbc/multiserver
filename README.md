@@ -228,7 +228,7 @@ var Net = require('multiserver/plugins/net')`
 Net({port: 8889, host: 'mydomain.com'}) => net
 net.stringify() => 'net:mydomain.com:8889'
 ```
-### `WebSockets({host,port,scope,handler?})`
+### `WebSockets({host,port,scope,handler?,key?,cert?})`
 
 create a websocket server. Since websockets are
 just a special mode of http, this also creates a http
@@ -239,6 +239,9 @@ WebSockets `ws://{host}:{port}?` port defaults to 80 if not provided.
 
 WebSockets over https is `wss://{host}:{port}?` where port is
 443 if not provided.
+
+If `opts.key` and `opts.cert` are provided as paths, a https server
+will be spawned.
 
 ``` js
 var WebSockets = require('multiserver/plugins/ws`)
