@@ -304,6 +304,18 @@ tape('wss default port', function (t) {
   t.end()
 })
 
+tape('wss with key and cert', function (t) {
+  var ws = Ws({
+    external: 'domain.de',
+    scope: 'public',
+    key: 'path',
+    cert: 'path'
+  })
+  t.equal(ws.stringify('public'), 'wss://domain.de')
+  t.equal(ws.stringify('local'), null)
+  t.equal(ws.stringify('device'), null)
+  t.end()
+})
 
 var onion = Onion({scope: 'public'})
 

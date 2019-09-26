@@ -240,7 +240,8 @@ WebSockets `ws://{host}:{port}?` port defaults to 80 if not provided.
 WebSockets over https is `wss://{host}:{port}?` where port is
 443 if not provided.
 
-If key and cert are provided as paths, a https server will be spawned.
+If `opts.key` and `opts.cert` are provided as paths, a https server
+will be spawned.
 
 ``` js
 var WebSockets = require('multiserver/plugins/ws`)
