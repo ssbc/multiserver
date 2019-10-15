@@ -52,7 +52,15 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
 
       var server = net.createServer(serverOpts, function (stream) {
         onConnection(toDuplex(stream))
-      }).listen(port, host, startedCb)
+      })
+
+      if (startedCb) server.addListener('error', startedCb)
+
+      server.listen(port, host, startedCb ? function () {
+        server.removeListener('error', startedCb)
+        startedCb();
+      } : startedCb)
+
       return function (cb) {
         debug('Closing server on %s:%d', host, port)
         server.close(function(err) {

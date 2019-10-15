@@ -178,6 +178,22 @@ tape('net: do not listen on all addresses', function (t) {
   })
 })
 
+tape('net: do not crash if listen() fails', function(t) {
+  var combined = Compose([
+    Net({
+      scope: 'private',
+      port: 4848,
+      host: '$not-a-valid-ip-addr$',
+    }),
+    shs
+  ])
+  var close = combined.server(echo, function() {}, function(err) {
+    t.ok(err, 'should propagate listen error up')
+    t.equal(err.code, 'ENOTFOUND', 'the error is expected')
+    close(function() {t.end()})
+  })
+})
+
 tape('combined, unix', function (t) {
   var p = 'multiunixtest'+(new Date()).getTime()
   fs.mkdirSync(p)
