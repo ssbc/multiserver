@@ -10,7 +10,7 @@ const pull = require('pull-stream/pull')
 const {
   getAddresses,
   getRandomPort,
-} = require('../lib/util')
+} = require('../lib/network')
 
 function safe_origin (origin, address, port) {
   //if the connection is not localhost, we shouldn't trust

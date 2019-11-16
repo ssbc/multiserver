@@ -4,7 +4,7 @@ const {
   getAddresses,
   getRandomPort,
   protocolToAddress
-} = require('../lib/util')
+} = require('../lib/network')
 
 var net
 try {
