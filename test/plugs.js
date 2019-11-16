@@ -126,6 +126,25 @@ tape('combined, ipv6', function (t) {
   })
 })
 
+if (has_ipv6)
+tape('stringify() does not show scopeid from ipv6', function (t) {
+  var combined = Compose([
+    Net({
+      scope: 'private',
+      port: 4848,
+      host: 'fe80::1065:74a4:4016:6266%wlan0'
+    }),
+    shs
+  ])
+  var addr = combined.stringify('private')
+  t.equal(
+    addr,
+    'net:fe80::1065:74a4:4016:6266:4848~shs:' +
+    keys.publicKey.toString('base64')
+  )
+  t.end()
+})
+
 tape('net: do not listen on all addresses', function (t) {
   // This starts a server listening on localhost and then calls `stringify()`
   // on a "fake" server configured to listen on the local scope (LAN). This
@@ -286,6 +305,18 @@ tape('wss default port', function (t) {
   t.end()
 })
 
+tape('wss with key and cert', function (t) {
+  var ws = Ws({
+    external: 'domain.de',
+    scope: 'public',
+    key: 'path',
+    cert: 'path'
+  })
+  t.equal(ws.stringify('public'), 'wss://domain.de')
+  t.equal(ws.stringify('local'), null)
+  t.equal(ws.stringify('device'), null)
+  t.end()
+})
 
 var onion = Onion({scope: 'public'})
 
@@ -362,7 +393,7 @@ function testAbort (name, combined) {
         close(function() {t.end()})
       }, 500)
     })
-    
+
     abort()
 
   })

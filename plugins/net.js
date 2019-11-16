@@ -98,7 +98,8 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
         return null
       }
 
-      // Give priority to `external` if targeting public scope.
+      // We want to avoid using `host` if the target scope is public and some
+      // external host (like example.com) is defined.
       const isPublic = targetScope === 'public' && external != null
       const targetHost = isPublic ? external : host
 
