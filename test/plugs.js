@@ -1,7 +1,6 @@
 var tape = require('tape')
 var pull = require('pull-stream')
 var Pushable = require('pull-pushable')
-const fs = require('fs')
 const { getAddresses } = require('../lib/network')
 
 var Compose = require('../lib/compose')
