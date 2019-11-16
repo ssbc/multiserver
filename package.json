@@ -8,6 +8,7 @@
     "url": "git://github.com/dominictarr/multiserver.git"
   },
   "dependencies": {
+    "cartesian-product": "^2.1.2",
     "debug": "^4.1.1",
     "multicb": "^1.2.2",
     "pull-stream": "^3.6.1",
