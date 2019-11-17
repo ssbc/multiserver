@@ -93,52 +93,52 @@ tape('combined', function (t) {
 })
 
 if (has_ipv6)
-tape('combined, ipv6', function (t) {
-  var combined = Compose([
-    Net({
-      port: 4848,
-      host: '::'
-    }),
-    shs
-  ])
-  var close = combined.server(echo)
-  var addr = combined.stringify('device')
-  console.log('addr', addr)
+  tape('combined, ipv6', function (t) {
+    var combined = Compose([
+      Net({
+        port: 4848,
+        host: '::'
+      }),
+      shs
+    ])
+    var close = combined.server(echo)
+    var addr = combined.stringify('device')
+    console.log('addr', addr)
 
 
-  combined.client(addr, function (err, stream) {
-    if(err) throw err
-    t.ok(stream.address, 'has an address')
-    pull(
-      pull.values([Buffer.from('hello world')]),
-      stream,
-      pull.collect(function (err, ary) {
-        if(err) throw err
-        t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        close(function() {t.end()})
-      })
-    )
+    combined.client(addr, function (err, stream) {
+      if(err) throw err
+      t.ok(stream.address, 'has an address')
+      pull(
+        pull.values([Buffer.from('hello world')]),
+        stream,
+        pull.collect(function (err, ary) {
+          if(err) throw err
+          t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+          close(function() {t.end()})
+        })
+      )
+    })
   })
-})
 
 if (has_ipv6)
-tape('stringify() does not show scopeid from ipv6', function (t) {
-  var combined = Compose([
-    Net({
-      scope: 'private',
-      port: 4848,
-      host: 'fe80::1065:74a4:4016:6266%wlan0'
-    }),
-    shs
-  ])
-  var addr = combined.stringify('private')
-  t.equal(
-    addr,
-    'net:fe80::1065:74a4:4016:6266:4848~shs:' +
-    keys.publicKey.toString('base64')
-  )
-  t.end()
-})
+  tape('stringify() does not show scopeid from ipv6', function (t) {
+    var combined = Compose([
+      Net({
+        scope: 'private',
+        port: 4848,
+        host: 'fe80::1065:74a4:4016:6266%wlan0'
+      }),
+      shs
+    ])
+    var addr = combined.stringify('private')
+    t.equal(
+      addr,
+      'net:fe80::1065:74a4:4016:6266:4848~shs:' +
+      keys.publicKey.toString('base64')
+    )
+    t.end()
+  })
 
 tape('net: do not listen on all addresses', function (t) {
   var combined = Compose([
@@ -146,7 +146,7 @@ tape('net: do not listen on all addresses', function (t) {
       scope: 'device',
       port: 4848,
       host: 'localhost',
-//      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
+      //      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
     shs
   ])
@@ -158,7 +158,7 @@ tape('net: do not listen on all addresses', function (t) {
       scope: 'local',
       port: 4848,
       //host: 'localhost',
-//      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
+      //      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
     shs
   ])
@@ -411,7 +411,7 @@ testAbort('combined', combined)
 testAbort('combined.ws', combined_ws)
 
 tape('error should have client address on it', function (t) {
-//  return t.end()
+  //  return t.end()
   check = function (id, cb) {
     throw new Error('should never happen')
   }
