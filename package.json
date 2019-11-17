@@ -10,6 +10,7 @@
   "dependencies": {
     "debug": "^4.1.1",
     "multicb": "^1.2.2",
+    "multiserver-scopes": "^1.0.0",
     "pull-stream": "^3.6.1",
     "pull-ws": "^3.3.0",
     "secret-handshake": "^1.1.16",
