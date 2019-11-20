@@ -178,6 +178,7 @@ tape('net: do not listen on all addresses', function (t) {
 
   combined.client(addr, function (err, stream) {
     t.ok(err, 'should only listen on localhost')
+    t.equal(err.code, 'ECONNREFUSED', 'the error is a connection error')
     close(function() {t.end()})
   })
 })
