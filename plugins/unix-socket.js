@@ -9,11 +9,11 @@ const os = require('os')
 var started = false
 
 module.exports = function (opts) {
-	if (process.platform === 'win32') {
-		opts.path = opts.path || path.join('\\\\?\\pipe', process.cwd(), 'multiserver')
-	} else {
-		opts.path = opts.path ||  fs.mkdtempSync(path.join(os.tmpdir(), 'multiserver-'))
-	}
+  if (process.platform === 'win32') {
+    opts.path = opts.path || path.join('\\\\?\\pipe', process.cwd(), 'multiserver')
+  } else {
+    opts.path = opts.path ||  fs.mkdtempSync(path.join(os.tmpdir(), 'multiserver-'))
+  }
 
   const socket = path.join(opts.path, 'socket')
   const addr = 'unix:' + socket

@@ -66,7 +66,7 @@ module.exports = function (opts = {}) {
         opts.cert = fs.readFileSync(opts.cert)
 
       var server = opts.server ||
-          (opts.key && opts.cert ? https.createServer({ key: opts.key, cert: opts.cert }, opts.handler) : http.createServer(opts.handler))
+        (opts.key && opts.cert ? https.createServer({ key: opts.key, cert: opts.cert }, opts.handler) : http.createServer(opts.handler))
 
       WS.createServer(Object.assign({}, opts, {server: server}), function (stream) {
         stream.address = safe_origin(
