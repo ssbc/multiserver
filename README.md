@@ -32,7 +32,7 @@ putting a version number within the url. A new version of
 the API can then be used without touching the old one at all.
 
 multiserver adapts this approach to lower level protocols.
-Instead of negioating which protocol to use, run multiple
+Instead of negotiating which protocol to use, run multiple
 protocols side by side, and consider the protocol part of the address.
 
 Most network systems have some sort of address look up,
