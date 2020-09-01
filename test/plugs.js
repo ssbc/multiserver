@@ -1,8 +1,7 @@
-var fs = require('fs')
 var tape = require('tape')
 var pull = require('pull-stream')
 var Pushable = require('pull-pushable')
-var scopes = require('multiserver-scopes')
+const fs = require('fs')
 
 var Compose = require('../compose')
 var Net = require('../plugins/net')
@@ -17,20 +16,14 @@ var seed = cl.crypto_hash_sha256(Buffer.from('TESTSEED'))
 var keys = cl.crypto_sign_seed_keypair(seed)
 var appKey = cl.crypto_hash_sha256(Buffer.from('TEST'))
 
-var requested, ts
-
 //this gets overwritten in the last test.
 var check = function (id, cb) {
   cb(null, true)
 }
 
-//var net = Net({port: 4848, scope: 'device'})
 var net = Net({port: 4848})
 var ws = Ws({port: 4848})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
-  requested = id
-  ts = Date.now()
-
   check(id, cb)
 }})
 
@@ -100,33 +93,52 @@ tape('combined', function (t) {
 })
 
 if (has_ipv6)
-tape('combined, ipv6', function (t) {
-  var combined = Compose([
-    Net({
-      port: 4848,
-      host: '::'
-    }),
-    shs
-  ])
-  var close = combined.server(echo)
-  var addr = combined.stringify('device')
-  console.log('addr', addr)
+  tape('combined, ipv6', function (t) {
+    var combined = Compose([
+      Net({
+        port: 4848,
+        host: '::'
+      }),
+      shs
+    ])
+    var close = combined.server(echo)
+    var addr = combined.stringify('device')
+    console.log('addr', addr)
 
 
-  combined.client(addr, function (err, stream) {
-    if(err) throw err
-    t.ok(stream.address, 'has an address')
-    pull(
-      pull.values([Buffer.from('hello world')]),
-      stream,
-      pull.collect(function (err, ary) {
-        if(err) throw err
-        t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        close(function() {t.end()})
-      })
-    )
+    combined.client(addr, function (err, stream) {
+      if(err) throw err
+      t.ok(stream.address, 'has an address')
+      pull(
+        pull.values([Buffer.from('hello world')]),
+        stream,
+        pull.collect(function (err, ary) {
+          if(err) throw err
+          t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+          close(function() {t.end()})
+        })
+      )
+    })
   })
-})
+
+if (has_ipv6)
+  tape('stringify() does not show scopeid from ipv6', function (t) {
+    var combined = Compose([
+      Net({
+        scope: 'private',
+        port: 4848,
+        host: 'fe80::1065:74a4:4016:6266%wlan0'
+      }),
+      shs
+    ])
+    var addr = combined.stringify('private')
+    t.equal(
+      addr,
+      'net:fe80::1065:74a4:4016:6266:4848~shs:' +
+      keys.publicKey.toString('base64')
+    )
+    t.end()
+  })
 
 tape('net: do not listen on all addresses', function (t) {
   var combined = Compose([
@@ -134,7 +146,7 @@ tape('net: do not listen on all addresses', function (t) {
       scope: 'device',
       port: 4848,
       host: 'localhost',
-//      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
+      //      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
     shs
   ])
@@ -146,7 +158,7 @@ tape('net: do not listen on all addresses', function (t) {
       scope: 'local',
       port: 4848,
       //host: 'localhost',
-//      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
+      //      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
     shs
   ])
@@ -159,13 +171,26 @@ tape('net: do not listen on all addresses', function (t) {
   })
 })
 
+tape('net: do not crash if listen() fails', function(t) {
+  var combined = Compose([
+    Net({
+      scope: 'private',
+      port: 4848,
+      host: '$not-a-valid-ip-addr$',
+    }),
+    shs
+  ])
+  var close = combined.server(echo, function() {}, function(err) {
+    t.ok(err, 'should propagate listen error up')
+    t.equal(err.code, 'ENOTFOUND', 'the error is expected')
+    close(function() {t.end()})
+  })
+})
+
 tape('combined, unix', function (t) {
-  var p = 'multiunixtest'+(new Date()).getTime()
-  fs.mkdirSync(p)
   var combined = Compose([
     Unix({
       server: true,
-      path: p,
     }),
     shs
   ])
@@ -183,7 +208,6 @@ tape('combined, unix', function (t) {
         if(err) throw err
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
         close(function() {
-          fs.rmdirSync(p)
           t.end()
         })
       })
@@ -285,6 +309,18 @@ tape('wss default port', function (t) {
   t.end()
 })
 
+tape('wss with key and cert', function (t) {
+  var ws = Ws({
+    external: 'domain.de',
+    scope: 'public',
+    key: 'path',
+    cert: 'path'
+  })
+  t.equal(ws.stringify('public'), 'wss://domain.de')
+  t.equal(ws.stringify('local'), null)
+  t.equal(ws.stringify('device'), null)
+  t.end()
+})
 
 var onion = Onion({scope: 'public'})
 
@@ -371,7 +407,7 @@ function testAbort (name, combined) {
         close(function() {t.end()})
       }, 500)
     })
-    
+
     abort()
   })
 }
@@ -379,34 +415,30 @@ function testAbort (name, combined) {
 testAbort('combined', combined)
 testAbort('combined.ws', combined_ws)
 
-function testErrorAddress(combined, type) {
+tape('error should have client address on it', function (t) {
+  //  return t.end()
+  check = function (id, cb) {
+    throw new Error('should never happen')
+  }
+  var close = combined.server(function (stream) {
+    throw new Error('should never happen')
+  }, function (err) {
+    t.ok(/^net:/.test(err.address))
+    t.ok(/~shs:/.test(err.address))
+    //the shs address won't actually parse, because it doesn't have the key in it
+    //because the key is not known in a wrong number.
+  }, function () {
 
-  tape('error should have client address on it:' + type, function (t) {
-    check = function (id, cb) {
-      throw new Error('should never happen')
-    }
-    var close = combined.server(function (stream) {
-      throw new Error('should never happen')
-    }, function (err) {
-      var addr = err.address
-      t.ok(err.address.indexOf(type) == 0) //net or ws
-      t.ok(/\~shs\:/.test(err.address))
-      //the shs address won't actually parse, because it doesn't have the key in it
-      //because the key is not known in a wrong number.
-    }, function () {
-
-      //very unlikely this is the address, which will give a wrong number at the server.
-      var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
-      combined.client(addr, function (err, stream) {
-        //client should see client auth rejected
-        t.ok(err)
-        console.log('Calling close')
-        close() // in this case, net.server.close(cb) never calls its cb, why?
-        t.end()
-      })
+    //very unlikely this is the address, which will give a wrong number at the server.
+    var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
+    combined.client(addr, function (err, stream) {
+      //client should see client auth rejected
+      t.ok(err)
+      console.log('Calling close')
+      close() // in this case, net.server.close(cb) never calls its cb, why?
+      t.end()
     })
   })
-
 }
 
 testErrorAddress(combined, 'net')
