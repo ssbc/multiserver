@@ -415,28 +415,30 @@ function testAbort (name, combined) {
 testAbort('combined', combined)
 testAbort('combined.ws', combined_ws)
 
-tape('error should have client address on it', function (t) {
-  //  return t.end()
-  check = function (id, cb) {
-    throw new Error('should never happen')
-  }
-  var close = combined.server(function (stream) {
-    throw new Error('should never happen')
-  }, function (err) {
-    t.ok(/^net:/.test(err.address))
-    t.ok(/~shs:/.test(err.address))
-    //the shs address won't actually parse, because it doesn't have the key in it
-    //because the key is not known in a wrong number.
-  }, function () {
+function testErrorAddress(combined, type) {
+  tape('error should have client address on it:' + type, function (t) {
+    check = function (id, cb) {
+      throw new Error('should never happen')
+    }
+    var close = combined.server(function (stream) {
+      throw new Error('should never happen')
+    }, function (err) {
+      var addr = err.address
+      t.ok(err.address.indexOf(type) == 0) //net or ws
+      t.ok(/\~shs\:/.test(err.address))
+      //the shs address won't actually parse, because it doesn't have the key in it
+      //because the key is not known in a wrong number.
+    }, function () {
 
-    //very unlikely this is the address, which will give a wrong number at the server.
-    var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
-    combined.client(addr, function (err, stream) {
-      //client should see client auth rejected
-      t.ok(err)
-      console.log('Calling close')
-      close() // in this case, net.server.close(cb) never calls its cb, why?
-      t.end()
+      //very unlikely this is the address, which will give a wrong number at the server.
+      var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
+      combined.client(addr, function (err, stream) {
+        //client should see client auth rejected
+        t.ok(err)
+        console.log('Calling close')
+        close() // in this case, net.server.close(cb) never calls its cb, why?
+        t.end()
+      })
     })
   })
 }
