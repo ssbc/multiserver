@@ -1,7 +1,6 @@
 var tape = require('tape')
 var pull = require('pull-stream')
 var Pushable = require('pull-pushable')
-const fs = require('fs')
 
 var Compose = require('../compose')
 var Net = require('../plugins/net')
@@ -165,7 +164,7 @@ tape('net: do not listen on all addresses', function (t) {
 
   var addr = fake_combined.stringify('local') // returns external
   console.log('addr local scope', addr)
-  combined.client(addr, function (err, stream) {
+  combined.client(addr, function (err) {
     t.ok(err, 'should only listen on localhost')
     close(function() {t.end()})
   })
@@ -247,7 +246,7 @@ tape('error if try to connect on wrong protocol', function (t) {
 
   t.equal(combined_ws.parse(combined.stringify()), null)
 
-  combined_ws.client(combined.stringify(), function (err, stream) {
+  combined_ws.client(combined.stringify(), function (err) {
     t.ok(err)
     t.end()
   })
@@ -384,7 +383,7 @@ function testAbort (name, combined) {
       throw new Error('should never happen')
     })
 
-    var abort = combined.client(combined.stringify(), function (err, stream) {
+    var abort = combined.client(combined.stringify(), function (err) {
       t.ok(err)
 
       // NOTE: without the timeout, we try to close the server
@@ -408,10 +407,10 @@ testAbort('combined.ws', combined_ws)
 
 tape('error should have client address on it', function (t) {
   //  return t.end()
-  check = function (id, cb) {
+  check = function () {
     throw new Error('should never happen')
   }
-  var close = combined.server(function (stream) {
+  var close = combined.server(function () {
     throw new Error('should never happen')
   }, function (err) {
     t.ok(/^net:/.test(err.address))
@@ -422,7 +421,7 @@ tape('error should have client address on it', function (t) {
 
     //very unlikely this is the address, which will give a wrong number at the server.
     var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
-    combined.client(addr, function (err, stream) {
+    combined.client(addr, function (err) {
       //client should see client auth rejected
       t.ok(err)
       console.log('Calling close')

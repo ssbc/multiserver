@@ -33,7 +33,7 @@ module.exports = function (plugs, wrap) {
         // If a callback is not registered to be called back when the servers are
         // fully started, our default behaviour is just to print any errors starting
         // the servers to the log
-        startedCb = (err, result) => {
+        startedCb = (err) => {
           if (err) {
             console.error("Error starting multiserver server: " + err)
           }

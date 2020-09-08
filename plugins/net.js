@@ -121,7 +121,7 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
       }
 
       // Remove IPv6 scopeid suffix, if any, e.g. `%wlan0`
-      resultHost = resultHost.replace(/(\%\w+)$/, '')
+      resultHost = resultHost.replace(/(%\w+)$/, '')
 
       return toAddress(resultHost, port)
     }
