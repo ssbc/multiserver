@@ -394,7 +394,7 @@ function testAbort (name, combined) {
       // This is messy, combined.server should be a proper async call
       setTimeout( function() {
         console.log('Calling close')
-        close(function() {t.end()})
+        close(t.end)
       }, 500)
     })
 
@@ -426,8 +426,7 @@ tape('error should have client address on it', function (t) {
       //client should see client auth rejected
       t.ok(err)
       console.log('Calling close')
-      close() // in this case, net.server.close(cb) never calls its cb, why?
-      t.end()
+      close(t.end)
     })
   })
 })
