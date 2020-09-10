@@ -70,7 +70,9 @@ module.exports = function (ary, wrap) {
     name: ary.map(function (e) { return e.name }).join(separator),
     scope: proto.scope,
     client: function (_opts, cb) {
+      console.log('client called', { _opts })
       var opts = parseMaybe(_opts)
+      console.log({ opts })
       if(!opts) return cb(new Error('could not parse address:'+_opts))
       return proto.client(head(opts), function (err, stream) {
         if(err) return cb(err)

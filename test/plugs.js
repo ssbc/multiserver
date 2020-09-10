@@ -79,12 +79,12 @@ tape('combined', function (t) {
   var close = combined.server(echo)
 
   combined.client(combined.stringify('device'), function (err, stream) {
-    if(err) throw err
+    t.error(err)
     pull(
       pull.values([Buffer.from('hello world')]),
       stream,
       pull.collect(function (err, ary) {
-        if(err) throw err
+        t.error(err)
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
         close(function() {t.end()})
       })
@@ -107,13 +107,13 @@ if (has_ipv6)
 
 
     combined.client(addr, function (err, stream) {
-      if(err) throw err
+      t.error(err)
       t.ok(stream.address, 'has an address')
       pull(
         pull.values([Buffer.from('hello world')]),
         stream,
         pull.collect(function (err, ary) {
-          if(err) throw err
+          t.error(err)
           t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
           close(function() {t.end()})
         })
@@ -199,13 +199,13 @@ tape('combined, unix', function (t) {
   console.log('unix addr', addr)
 
   combined.client(addr, function (err, stream) {
-    if(err) throw err
+    t.error(err)
     t.ok(stream.address, 'has an address')
     pull(
       pull.values([Buffer.from('hello world')]),
       stream,
       pull.collect(function (err, ary) {
-        if(err) throw err
+        t.error(err)
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
         close(function() {
           t.end()
@@ -217,14 +217,16 @@ tape('combined, unix', function (t) {
 
 tape('ws with combined', function (t) {
   var close = combined_ws.server(function (stream) {
+    console.log({ stream })
     console.log('combined_ws address', stream.address)
     t.ok(stream.address, 'has an address')
     echo(stream)
   }, null, function () {
-
+    console.log({ combined_ws })
+    console.log(combined_ws.stringify())
     combined_ws.client(combined_ws.stringify(), function (err, stream) {
-      if(err) throw err
-      t.ok(stream.address, 'has an address')
+      t.error(err)
+      t.ok(stream && stream.address, 'has an address')
       console.log('combined_ws address', stream.address)
       var pushable = Pushable()
       pushable.push(Buffer.from('hello world'))
@@ -363,11 +365,11 @@ function testServerId(combined, name, port) {
 
       pull(stream.source, stream.sink) //echo
     }, function (err) {
-      if(err) throw err
+      t.error(err)
     }, function () {
 
       combined.client(combined.stringify(), function (err, stream) {
-        if(err) throw err
+        t.error(err)
         var addr = combined.parse(stream.address)
         t.equal((addr[0].name || addr[0].protocol).replace(':', ''), name)
         t.equal(+addr[0].port, 4848)

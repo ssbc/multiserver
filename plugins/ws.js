@@ -67,6 +67,8 @@ module.exports = function (opts = {}) {
       if (typeof opts.cert === 'string')
         opts.cert = fs.readFileSync(opts.cert)
 
+      console.log('creating server', opts)
+
       var server = opts.server ||
         (opts.key && opts.cert ? https.createServer({ key: opts.key, cert: opts.cert }, opts.handler) : http.createServer(opts.handler))
 
@@ -98,6 +100,7 @@ module.exports = function (opts = {}) {
       }
     },
     client: function (addr, cb) {
+      console.log({ addr })
       if(!addr.host) {
         addr.hostname = addr.hostname || opts.host || 'localhost'
         addr.slashes = true
