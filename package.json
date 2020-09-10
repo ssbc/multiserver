@@ -13,7 +13,7 @@
     "multiserver-scopes": "^1.0.0",
     "pull-cat": "~1.1.5",
     "pull-stream": "^3.6.1",
-    "pull-ws": "^3.3.0",
+    "pull-ws": "pull-stream/pull-ws#upgrade-ws",
     "secret-handshake": "^1.1.16",
     "separator-escape": "0.0.0",
     "socks": "^2.2.3",
