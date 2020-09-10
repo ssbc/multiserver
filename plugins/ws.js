@@ -4,6 +4,8 @@ var pull = require('pull-stream/pull')
 var Map = require('pull-stream/throughs/map')
 var scopes = require('multiserver-scopes')
 var http = require('http')
+var https      = require('https')
+var fs         = require('fs')
 var debug = require('debug')('multiserver:ws')
 
 function safe_origin (origin, address, port) {
@@ -44,7 +46,7 @@ module.exports = function (opts = {}) {
     return s === scope || Array.isArray(scope) && ~scope.indexOf(s)
   }
 
-  var secure = opts.server && !!opts.server.key
+  var secure = opts.server && !!opts.server.key || (!!opts.key && !!opts.cert)
   return {
     name: 'ws',
     scope: () => scope,
@@ -60,7 +62,13 @@ module.exports = function (opts = {}) {
       // the interface is instantiated. Is that the way it should work?
       opts.port = opts.port || getRandomPort()
 
-      var server = opts.server || http.createServer(opts.handler)
+      if (typeof opts.key === 'string')
+        opts.key = fs.readFileSync(opts.key)
+      if (typeof opts.cert === 'string')
+        opts.cert = fs.readFileSync(opts.cert)
+
+      var server = opts.server ||
+        (opts.key && opts.cert ? https.createServer({ key: opts.key, cert: opts.cert }, opts.handler) : http.createServer(opts.handler))
 
       WS.createServer(Object.assign({}, opts, {server: server}), function (stream) {
         stream.address = safe_origin(

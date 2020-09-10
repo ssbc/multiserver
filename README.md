@@ -1,5 +1,7 @@
 # multiserver
 
+[![Build Status](https://travis-ci.org/ssbc/multiserver.svg?branch=master)](https://travis-ci.org/ssbc/multiserver)
+
 A single interface that can work with multiple protocols,
 and multiple transforms of those protocols (eg, security layer)
 
@@ -30,7 +32,7 @@ putting a version number within the url. A new version of
 the API can then be used without touching the old one at all.
 
 multiserver adapts this approach to lower level protocols.
-Instead of negioating which protocol to use, run multiple
+Instead of negotiating which protocol to use, run multiple
 protocols side by side, and consider the protocol part of the address.
 
 Most network systems have some sort of address look up,
@@ -90,11 +92,11 @@ var ms = MultiServer([
     //this protocol doesn't exist yet, but it could.
     require('secret-handshake2')({
       keys: keys,
-      appKey: appKey //application key
+      appKey: appKey, //application key
       auth: accept_all
     }),
   ]
-]
+])
 
 console.log(ms.stringify())
 
@@ -228,7 +230,7 @@ var Net = require('multiserver/plugins/net')`
 Net({port: 8889, host: 'mydomain.com'}) => net
 net.stringify() => 'net:mydomain.com:8889'
 ```
-### `WebSockets({host,port,scope,handler?})`
+### `WebSockets({host,port,scope,handler?,key?,cert?})`
 
 create a websocket server. Since websockets are
 just a special mode of http, this also creates a http
@@ -239,6 +241,9 @@ WebSockets `ws://{host}:{port}?` port defaults to 80 if not provided.
 
 WebSockets over https is `wss://{host}:{port}?` where port is
 443 if not provided.
+
+If `opts.key` and `opts.cert` are provided as paths, a https server
+will be spawned.
 
 ``` js
 var WebSockets = require('multiserver/plugins/ws`)

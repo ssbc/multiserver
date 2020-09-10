@@ -15,7 +15,8 @@ module.exports = function (plugs, wrap) {
   var _self = {
     name: plugs.map(function (e) { return e.name }).join(';'),
     client: function (addr, cb) {
-      var _addr = split(addr).find(function (addr) {
+      let plug
+      const _addr = split(addr).find(function (addr) {
         //connect with the first plug that understands this string.
         plug = plugs.find(function (plug) {
           return plug.parse(addr) ? plug : null

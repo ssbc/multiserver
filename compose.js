@@ -1,11 +1,7 @@
-var assert = require('assert')
 var separator = '~', escape = '!'
 var SE = require('separator-escape')(separator, escape)
 
 var isArray = Array.isArray
-function isFunction (f) {
-  return 'function' === typeof f
-}
 function isString (s) {
   return 'string' === typeof s
 }

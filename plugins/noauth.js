@@ -1,5 +1,3 @@
-var pull = require('pull-stream')
-
 module.exports = function (opts) {
   return {
     name: 'noauth',
