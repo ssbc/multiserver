@@ -8,7 +8,7 @@ module.exports = function (opts) {
     return {
       name: 'onion',
       scope: function() { return 'public' },
-      parse: function (s) { return null }
+      parse: function () { return null }
     }
   }
 
@@ -63,7 +63,7 @@ module.exports = function (opts) {
         }
       }
 
-      tryConnect(connectOpts(daemonProxyOpts), function(err) {
+      tryConnect(connectOpts(daemonProxyOpts), function() {
         tryConnect(connectOpts(browserProxyOpts), function(err) {
           cb(err)
         })
@@ -87,7 +87,7 @@ module.exports = function (opts) {
         port: port
       }
     },
-    stringify: function (scope) {
+    stringify: function () {
       return null
     }
   }

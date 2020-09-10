@@ -146,7 +146,7 @@ module.exports = function (opts = {}) {
     },
     parse: function (str) {
       var addr = URL.parse(str)
-      if(!/^wss?\:$/.test(addr.protocol)) return null
+      if(!/^wss?:$/.test(addr.protocol)) return null
       return addr
     }
   }

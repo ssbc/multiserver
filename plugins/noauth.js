@@ -1,7 +1,7 @@
 module.exports = function (opts) {
   return {
     name: 'noauth',
-    create: function (_opts) {
+    create: function () {
       return function (stream, cb) {
         cb(null, {
           remote: opts.keys.publicKey,
@@ -12,7 +12,7 @@ module.exports = function (opts) {
         })
       }
     },
-    parse: function (str) {
+    parse: function () {
       return {}
     },
     stringify: function () {
