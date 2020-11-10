@@ -187,6 +187,21 @@ tape('net: do not crash if listen() fails', function(t) {
   })
 })
 
+tape('net: stringify support external being a string', function(t) {
+  var combined = Compose([
+    Net({
+      scope: 'public',
+      port: 4853,
+      host: 'localhost',
+      external: 'scuttlebutt.nz'
+    }),
+    shs
+  ])
+  var addr = combined.stringify('public')
+  t.equals(addr, 'net:scuttlebutt.nz:4853~shs:' + keys.publicKey.toString('base64'))
+  t.end()
+})
+
 tape('combined, unix', function (t) {
   var combined = Compose([
     Unix({
