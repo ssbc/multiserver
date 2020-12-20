@@ -460,3 +460,132 @@ tape('multiple scopes different hosts', function(t) {
 
   t.end()
 })
+
+tape('net: external is a string', function (t) {
+  var net = Net({
+    external: 'domain.de',
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  t.equal(net.stringify('public'), 'net:domain.de:9966')
+  t.equal(net.stringify('local'), null)
+  t.equal(net.stringify('device'), null)
+  t.end()
+})
+
+tape('net: external is an array', function (t) {
+  var net = Net({
+    external: ['domain.de', 'funtime.net'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  t.equal(net.stringify('public'), 'net:domain.de:9966;net:funtime.net:9966')
+  t.equal(net.stringify('local'), null)
+  t.equal(net.stringify('device'), null)
+  t.end()
+})
+
+tape('net: external is an array w/ a single entry & shs transform', function (t) {
+  var net = Net({
+    external: ['domain.de'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  var combined = Compose([net, shs])
+  t.equal(
+    combined.stringify('public'),
+    'net:domain.de:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw='
+  )
+  t.end()
+})
+
+tape('net: external is an array w/ multiple entries & shs transform', function (t) {
+  var net = Net({
+    external: ['domain.de', 'funtime.net'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  var combined = Compose([net, shs])
+  t.equal(
+    combined.stringify('public'),
+    'net:domain.de:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=;net:funtime.net:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw='
+  )
+  t.end()
+})
+
+tape('ws: external is a string', function (t) {
+  var ws = Ws({
+    external: 'domain.de',
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  t.equal(ws.stringify('public'), 'ws://domain.de:9966')
+  t.equal(ws.stringify('local'), null)
+  t.equal(ws.stringify('device'), null)
+  t.end()
+})
+
+
+tape('ws: external is an array', function (t) {
+  var ws = Ws({
+    external: ['domain.de', 'funtime.net'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  t.equal(ws.stringify('public'), 'ws://domain.de:9966;ws://funtime.net:9966')
+  t.equal(ws.stringify('local'), null)
+  t.equal(ws.stringify('device'), null)
+  t.end()
+})
+
+tape('ws: external is an array w/ a single entry & shs transform', function (t) {
+  var ws = Ws({
+    external: ['domain.de'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  var combined = Compose([ws, shs])
+  t.equal(
+    combined.stringify('public'),
+    'ws://domain.de:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw='
+  )
+  t.end()
+})
+
+tape('ws: external is an array w/ multiple entries & shs transform', function (t) {
+  var ws = Ws({
+    external: ['domain.de', 'funtime.net'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  var combined = Compose([ws, shs])
+  t.equal(
+    combined.stringify('public'),
+    'ws://domain.de:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=;ws://funtime.net:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw='
+  )
+  t.end()
+})

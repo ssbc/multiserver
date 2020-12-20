@@ -137,7 +137,16 @@ module.exports = function (opts = {}) {
         return null
       }
 
-      return URL.format({
+      return Array.isArray(resultHost)
+      ? resultHost.map((h) => {
+        return URL.format({
+          protocol: secure ? 'wss' : 'ws',
+          slashes: true,
+          hostname: h,
+          port: (secure ? port == 443 : port == 80) ? undefined : port
+        })
+      }).join(';')
+      : URL.format({
         protocol: secure ? 'wss' : 'ws',
         slashes: true,
         hostname: resultHost,
