@@ -75,19 +75,19 @@ function echo (stream) {
 }
 
 tape('combined', function (t) {
-  var close = combined.server(echo)
-
-  combined.client(combined.stringify('device'), function (err, stream) {
-    if(err) throw err
-    pull(
-      pull.values([Buffer.from('hello world')]),
-      stream,
-      pull.collect(function (err, ary) {
-        if(err) throw err
-        t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        close(t.end)
-      })
-    )
+  var close = combined.server(echo, null, () => {
+    combined.client(combined.stringify('device'), function (err, stream) {
+      if(err) throw err
+      pull(
+        pull.values([Buffer.from('hello world')]),
+        stream,
+        pull.collect(function (err, ary) {
+          if(err) throw err
+          t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+          close(t.end)
+        })
+      )
+    })
   })
 })
 
@@ -100,22 +100,23 @@ if (has_ipv6)
       }),
       shs
     ])
-    var close = combined.server(echo)
-    var addr = combined.stringify('device')
-    console.log('addr', addr)
+    var close = combined.server(echo, null, () => {
+      var addr = combined.stringify('device')
+      console.log('addr', addr)
 
-    combined.client(addr, function (err, stream) {
-      if(err) throw err
-      t.ok(stream.address, 'has an address')
-      pull(
-        pull.values([Buffer.from('hello world')]),
-        stream,
-        pull.collect(function (err, ary) {
-          if(err) throw err
-          t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-          close(t.end)
-        })
-      )
+      combined.client(addr, function (err, stream) {
+        if(err) throw err
+        t.ok(stream.address, 'has an address')
+        pull(
+          pull.values([Buffer.from('hello world')]),
+          stream,
+          pull.collect(function (err, ary) {
+            if(err) throw err
+            t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+            close(t.end)
+          })
+        )
+      })
     })
   })
 
@@ -148,24 +149,24 @@ tape('net: do not listen on all addresses', function (t) {
     }),
     shs
   ])
-  var close = combined.server(echo)
+  var close = combined.server(echo, null, () => {
+    //fake
+    var fake_combined = Compose([
+      Net({
+        scope: 'local',
+        port: 4851,
+        //host: 'localhost',
+        //      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
+      }),
+      shs
+    ])
 
-  //fake
-  var fake_combined = Compose([
-    Net({
-      scope: 'local',
-      port: 4851,
-      //host: 'localhost',
-      //      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
-    }),
-    shs
-  ])
-
-  var addr = fake_combined.stringify('local') // returns external
-  console.log('addr local scope', addr)
-  combined.client(addr, function (err, stream) {
-    t.ok(err, 'should only listen on localhost')
-    close(t.end)
+    var addr = fake_combined.stringify('local') // returns external
+    console.log('addr local scope', addr)
+    combined.client(addr, function (err, stream) {
+      t.ok(err, 'should only listen on localhost')
+      close(t.end)
+    })
   })
 })
 
@@ -178,7 +179,7 @@ tape('net: do not crash if listen() fails', function(t) {
     }),
     shs
   ])
-  var close = combined.server(echo, function() {}, function(err) {
+  var close = combined.server(echo, null, function(err) {
     t.ok(err, 'should propagate listen error up')
     t.match(err.code, /^(ENOTFOUND|EAI_AGAIN)$/, 'the error is expected')
     close(() => t.end())
@@ -207,22 +208,23 @@ tape('combined, unix', function (t) {
     }),
     shs
   ])
-  var close = combined.server(echo)
-  var addr = combined.stringify('device')
-  console.log('unix addr', addr)
+  var close = combined.server(echo, null, () => {
+    var addr = combined.stringify('device')
+    console.log('unix addr', addr)
 
-  combined.client(addr, function (err, stream) {
-    if(err) throw err
-    t.ok(stream.address, 'has an address')
-    pull(
-      pull.values([Buffer.from('hello world')]),
-      stream,
-      pull.collect(function (err, ary) {
-        if(err) throw err
-        t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        close(t.end)
-      })
-    )
+    combined.client(addr, function (err, stream) {
+      if(err) throw err
+      t.ok(stream.address, 'has an address')
+      pull(
+        pull.values([Buffer.from('hello world')]),
+        stream,
+        pull.collect(function (err, ary) {
+          if(err) throw err
+          t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+          close(t.end)
+        })
+      )
+    })
   })
 })
 
@@ -263,27 +265,28 @@ tape('error if try to connect on wrong protocol', function (t) {
 })
 
 tape('shs with seed', function (t) {
-  var close = combined.server(echo)
+  var close = combined.server(echo, null, () => {
 
-  var seed = cl.crypto_hash_sha256(Buffer.from('TEST SEED'))
-  var bob = cl.crypto_sign_seed_keypair(seed)
+    var seed = cl.crypto_hash_sha256(Buffer.from('TEST SEED'))
+    var bob = cl.crypto_sign_seed_keypair(seed)
 
-  var checked
-  check = function (id, cb) {
-    checked = id
-    if(id.toString('base64') === bob.publicKey.toString('base64'))
-      cb(null, true)
-    else
-      cb(null, false)
-  }
+    var checked
+    check = function (id, cb) {
+      checked = id
+      if(id.toString('base64') === bob.publicKey.toString('base64'))
+        cb(null, true)
+      else
+        cb(null, false)
+    }
 
-  var addr_with_seed = combined.stringify()+':'+seed.toString('base64')
+    var addr_with_seed = combined.stringify()+':'+seed.toString('base64')
 
-  combined.client(addr_with_seed, function (err, stream) {
-    t.notOk(err)
-    t.deepEqual(checked, bob.publicKey)
-    stream.source(true, function () {})
-    close(t.end)
+    combined.client(addr_with_seed, function (err, stream) {
+      t.notOk(err)
+      t.deepEqual(checked, bob.publicKey)
+      stream.source(true, function () {})
+      close(t.end)
+    })
   })
 })
 
@@ -386,23 +389,23 @@ function testAbort (name, combined) {
   tape(name+', aborted', function (t) {
     var close = combined.server(function onConnection() {
       throw new Error('should never happen')
+    }, null, () => {
+      var abort = combined.client(combined.stringify(), function (err, stream) {
+        t.ok(err, 'the error is expected')
+
+        // NOTE: without the timeout, we try to close the server
+        // before it actually started listening, which fails and then
+        // the server keeps runnung, causing the next test to fail with EADDRINUSE
+        //
+        // This is messy, combined.server should be a proper async call
+        setTimeout( function() {
+          //console.log('Calling close')
+          close(t.end)
+        }, 500)
+      })
+
+      abort()
     })
-
-    var abort = combined.client(combined.stringify(), function (err, stream) {
-      t.ok(err, 'the error is expected')
-
-      // NOTE: without the timeout, we try to close the server
-      // before it actually started listening, which fails and then
-      // the server keeps runnung, causing the next test to fail with EADDRINUSE
-      //
-      // This is messy, combined.server should be a proper async call
-      setTimeout( function() {
-        //console.log('Calling close')
-        close(t.end)
-      }, 500)
-    })
-
-    abort()
   })
 }
 
@@ -422,7 +425,6 @@ tape('error should have client address on it', function (t) {
     //the shs address won't actually parse, because it doesn't have the key in it
     //because the key is not known in a wrong number.
   }, function () {
-
     //very unlikely this is the address, which will give a wrong number at the server.
     var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
     combined.client(addr, function (err, stream) {
