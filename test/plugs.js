@@ -22,7 +22,7 @@ var check = function (id, cb) {
 }
 
 var net = Net({port: 4848})
-var ws = Ws({port: 4848})
+var ws = Ws({port: 4849})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   check(id, cb)
 }})
@@ -34,14 +34,13 @@ var combined_ws = Compose([ws, shs])
 var has_ipv6 = process.env.TRAVIS === undefined
 
 tape('parse, stringify', function (t) {
-
   t.equal(
     net.stringify('device'),
     'net:localhost:4848'
   )
   t.equal(
     ws.stringify('device'),
-    'ws://localhost:4848'
+    'ws://localhost:4849'
   )
   t.equal(
     shs.stringify(),
@@ -408,7 +407,7 @@ function testAbort (name, combined) {
       setTimeout( function() {
         console.log('Calling close')
         close(t.end)
-      })
+      }, 500)
     })
 
     abort()
