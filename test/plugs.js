@@ -182,7 +182,7 @@ tape('net: do not crash if listen() fails', function(t) {
   ])
   var close = combined.server(echo, function() {}, function(err) {
     t.ok(err, 'should propagate listen error up')
-    t.equal(err.code, 'ENOTFOUND', 'the error is expected')
+    t.match(err.code, /^(ENOTFOUND|EAI_AGAIN)$/, 'the error is expected')
     close(function() {t.end()})
   })
 })
