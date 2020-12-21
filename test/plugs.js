@@ -85,7 +85,7 @@ tape('combined', function (t) {
       pull.collect(function (err, ary) {
         if(err) throw err
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        close(function() {t.end()})
+        close(t.end)
       })
     )
   })
@@ -113,7 +113,7 @@ if (has_ipv6)
         pull.collect(function (err, ary) {
           if(err) throw err
           t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-          close(function() {t.end()})
+          close(t.end)
         })
       )
     })
@@ -165,7 +165,7 @@ tape('net: do not listen on all addresses', function (t) {
   console.log('addr local scope', addr)
   combined.client(addr, function (err, stream) {
     t.ok(err, 'should only listen on localhost')
-    close(function() {t.end()})
+    close(t.end)
   })
 })
 
@@ -181,7 +181,7 @@ tape('net: do not crash if listen() fails', function(t) {
   var close = combined.server(echo, function() {}, function(err) {
     t.ok(err, 'should propagate listen error up')
     t.match(err.code, /^(ENOTFOUND|EAI_AGAIN)$/, 'the error is expected')
-    close(function() {t.end()})
+    close(() => t.end())
   })
 })
 
@@ -220,9 +220,7 @@ tape('combined, unix', function (t) {
       pull.collect(function (err, ary) {
         if(err) throw err
         t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        close(function() {
-          t.end()
-        })
+        close(t.end)
       })
     )
   })
@@ -234,7 +232,6 @@ tape('ws with combined', function (t) {
     t.ok(stream.address, 'has an address')
     echo(stream)
   }, null, function () {
-
     combined_ws.client(combined_ws.stringify(), function (err, stream) {
       if(err) throw err
       t.ok(stream.address, 'has an address')
@@ -249,7 +246,7 @@ tape('ws with combined', function (t) {
         }),
         pull.collect(function (err, ary) {
           t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-          close(function() {t.end()})
+          close(t.end)
         })
       )
     })
@@ -257,7 +254,6 @@ tape('ws with combined', function (t) {
 })
 
 tape('error if try to connect on wrong protocol', function (t) {
-
   t.equal(combined_ws.parse(combined.stringify()), null)
 
   combined_ws.client(combined.stringify(), function (err, stream) {
@@ -267,7 +263,6 @@ tape('error if try to connect on wrong protocol', function (t) {
 })
 
 tape('shs with seed', function (t) {
-
   var close = combined.server(echo)
 
   var seed = cl.crypto_hash_sha256(Buffer.from('TEST SEED'))
@@ -288,9 +283,8 @@ tape('shs with seed', function (t) {
     t.notOk(err)
     t.deepEqual(checked, bob.publicKey)
     stream.source(true, function () {})
-    close(function() {t.end()})
+    close(t.end)
   })
-
 })
 
 tape('ws default port', function (t) {
@@ -338,7 +332,6 @@ tape('wss with key and cert', function (t) {
 var onion = Onion({scope: 'public'})
 
 tape('onion plug', function (t) {
-
   // onion has no server
   t.equal(onion.stringify('public'), null)
   t.equal(onion.stringify('device'), null)
@@ -357,7 +350,6 @@ tape('onion plug', function (t) {
 
   //should not return an address
   t.notOk(oshs.stringify())
-
   t.end()
 })
 
@@ -384,7 +376,7 @@ tape('id of stream from server', function (t) {
       t.equal(addr[0].port, 4848)
       t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
       stream.source(true, function () {
-        close(function() {t.end()})
+        close(t.end)
       })
     })
   })
