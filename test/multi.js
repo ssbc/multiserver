@@ -19,7 +19,7 @@ var check = function (id, cb) {
 
 var net = Net({port: 4848, scope: 'device'})
 var ws = Ws({port: 4849, scope: 'device'})
-console.log('appKey', appKey)
+//console.log('appKey', appKey)
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   check(id, cb)
 }})
@@ -47,15 +47,14 @@ tape('listen', function (t) {
   }, null, t.end)
 })
 
-var server_addr =
-'fake:peer.ignore~nul:what;'+multi.stringify('device')
+var server_addr = 'fake:peer.ignore~nul:what;'+multi.stringify('device')
 //"fake" in a unkown protocol, just to make sure it gets skipped.
 
-tape('connect to either server', function (t) {
+tape('connect to either server (net)', function (t) {
   t.ok(multi.stringify('device'))
   multi.client(server_addr, function (err, stream) {
     if(err) throw err
-    console.log(stream)
+    //console.log(stream)
     t.ok(/^net/.test(client_addr), 'client connected via net')
     t.ok(/^net/.test(stream.address), 'client connected via net')
     pull(
@@ -70,28 +69,11 @@ tape('connect to either server', function (t) {
   })
 })
 
-tape('connect to either server', function (t) {
+tape('connect to either server (ws)', function (t) {
   multi_ws.client(server_addr, function (err, stream) {
     if(err) throw err
     t.ok(/^ws/.test(client_addr), 'client connected via ws')
-    t.ok(/^ws/.test(stream.address), 'client connected via net')
-    pull(
-      pull.values([Buffer.from('Hello')]),
-      stream,
-      pull.collect(function (err,  ary) {
-        var data = Buffer.concat(ary).toString('utf8')
-        console.log("OUTPUT", data)
-        t.end()
-      })
-    )
-  })
-})
-
-tape('connect to either server', function (t) {
-  multi_net.client(server_addr, function (err, stream) {
-    if(err) throw err
-    t.ok(/^net/.test(client_addr), 'client connected via net')
-    t.ok(/^net/.test(stream.address), 'client connected via net')
+    t.ok(/^ws/.test(stream.address), 'client connected via ws')
     pull(
       pull.values([Buffer.from('Hello')]),
       stream,
