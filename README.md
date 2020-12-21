@@ -1,7 +1,5 @@
 # multiserver
 
-[![Build Status](https://travis-ci.org/ssbc/multiserver.svg?branch=master)](https://travis-ci.org/ssbc/multiserver)
-
 A single interface that can work with multiple protocols,
 and multiple transforms of those protocols (eg, security layer)
 
