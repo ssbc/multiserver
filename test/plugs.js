@@ -105,7 +105,6 @@ if (has_ipv6)
     var addr = combined.stringify('device')
     console.log('addr', addr)
 
-
     combined.client(addr, function (err, stream) {
       if(err) throw err
       t.ok(stream.address, 'has an address')
@@ -393,7 +392,6 @@ tape('id of stream from server', function (t) {
 })
 
 function testAbort (name, combined) {
-
   tape(name+', aborted', function (t) {
     var close = combined.server(function onConnection() {
       throw new Error('should never happen')
@@ -410,11 +408,10 @@ function testAbort (name, combined) {
       setTimeout( function() {
         console.log('Calling close')
         close(t.end)
-      }, 500)
+      })
     })
 
     abort()
-
   })
 }
 
