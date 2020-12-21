@@ -22,7 +22,7 @@ var check = function (id, cb) {
 }
 
 var net = Net({port: 4848})
-var ws = Ws({port: 4848})
+var ws = Ws({port: 4849})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   check(id, cb)
 }})
@@ -34,14 +34,13 @@ var combined_ws = Compose([ws, shs])
 var has_ipv6 = process.env.TRAVIS === undefined
 
 tape('parse, stringify', function (t) {
-
   t.equal(
     net.stringify('device'),
     'net:localhost:4848'
   )
   t.equal(
     ws.stringify('device'),
-    'ws://localhost:4848'
+    'ws://localhost:4849'
   )
   t.equal(
     shs.stringify(),
@@ -104,7 +103,6 @@ if (has_ipv6)
     var close = combined.server(echo)
     var addr = combined.stringify('device')
     console.log('addr', addr)
-
 
     combined.client(addr, function (err, stream) {
       if(err) throw err
@@ -182,7 +180,7 @@ tape('net: do not crash if listen() fails', function(t) {
   ])
   var close = combined.server(echo, function() {}, function(err) {
     t.ok(err, 'should propagate listen error up')
-    t.equal(err.code, 'ENOTFOUND', 'the error is expected')
+    t.match(err.code, /^(ENOTFOUND|EAI_AGAIN)$/, 'the error is expected')
     close(function() {t.end()})
   })
 })
@@ -370,7 +368,7 @@ tape('id of stream from server', function (t) {
   var close = combined.server(function (stream) {
     var addr = combined.parse(stream.address)
     t.ok(addr)
-    console.log('address as seen on server', addr)
+    //console.log('address as seen on server', addr)
     t.equal(addr[0].name, 'net')
     t.deepEqual(addr[1], combined.parse(combined.stringify())[1])
 
@@ -393,14 +391,13 @@ tape('id of stream from server', function (t) {
 })
 
 function testAbort (name, combined) {
-
   tape(name+', aborted', function (t) {
     var close = combined.server(function onConnection() {
       throw new Error('should never happen')
     })
 
     var abort = combined.client(combined.stringify(), function (err, stream) {
-      t.ok(err)
+      t.ok(err, 'the error is expected')
 
       // NOTE: without the timeout, we try to close the server
       // before it actually started listening, which fails and then
@@ -408,13 +405,12 @@ function testAbort (name, combined) {
       //
       // This is messy, combined.server should be a proper async call
       setTimeout( function() {
-        console.log('Calling close')
+        //console.log('Calling close')
         close(t.end)
       }, 500)
     })
 
     abort()
-
   })
 }
 
@@ -440,7 +436,7 @@ tape('error should have client address on it', function (t) {
     combined.client(addr, function (err, stream) {
       //client should see client auth rejected
       t.ok(err)
-      console.log('Calling close')
+      //console.log('Calling close')
       close(t.end)
     })
   })

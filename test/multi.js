@@ -19,7 +19,7 @@ var check = function (id, cb) {
 
 var net = Net({port: 4848, scope: 'device'})
 var ws = Ws({port: 4849, scope: 'device'})
-console.log('appKey', appKey)
+//console.log('appKey', appKey)
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   check(id, cb)
 }})
@@ -55,7 +55,7 @@ tape('connect to either server', function (t) {
   t.ok(multi.stringify('device'))
   multi.client(server_addr, function (err, stream) {
     if(err) throw err
-    console.log(stream)
+    //console.log(stream)
     t.ok(/^net/.test(client_addr), 'client connected via net')
     t.ok(/^net/.test(stream.address), 'client connected via net')
     pull(
