@@ -126,7 +126,7 @@ if (has_ipv6)
     var combined = Compose([
       Net({
         scope: 'private',
-        port: 4848,
+        port: 4849,
         host: 'fe80::1065:74a4:4016:6266%wlan0'
       }),
       shs
@@ -134,7 +134,7 @@ if (has_ipv6)
     var addr = combined.stringify('private')
     t.equal(
       addr,
-      'net:fe80::1065:74a4:4016:6266:4848~shs:' +
+      'net:fe80::1065:74a4:4016:6266:4849~shs:' +
       keys.publicKey.toString('base64')
     )
     t.end()
@@ -144,7 +144,7 @@ tape('net: do not listen on all addresses', function (t) {
   var combined = Compose([
     Net({
       scope: 'device',
-      port: 4848,
+      port: 4850,
       host: 'localhost',
       //      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
@@ -156,7 +156,7 @@ tape('net: do not listen on all addresses', function (t) {
   var fake_combined = Compose([
     Net({
       scope: 'local',
-      port: 4848,
+      port: 4851,
       //host: 'localhost',
       //      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
     }),
@@ -175,7 +175,7 @@ tape('net: do not crash if listen() fails', function(t) {
   var combined = Compose([
     Net({
       scope: 'private',
-      port: 4848,
+      port: 4852,
       host: '$not-a-valid-ip-addr$',
     }),
     shs
@@ -185,6 +185,21 @@ tape('net: do not crash if listen() fails', function(t) {
     t.equal(err.code, 'ENOTFOUND', 'the error is expected')
     close(function() {t.end()})
   })
+})
+
+tape('net: stringify support external being a string', function(t) {
+  var combined = Compose([
+    Net({
+      scope: 'public',
+      port: 4853,
+      host: 'localhost',
+      external: 'scuttlebutt.nz'
+    }),
+    shs
+  ])
+  var addr = combined.stringify('public')
+  t.equals(addr, 'net:scuttlebutt.nz:4853~shs:' + keys.publicKey.toString('base64'))
+  t.end()
 })
 
 tape('combined, unix', function (t) {
@@ -432,8 +447,8 @@ tape('error should have client address on it', function (t) {
 })
 
 tape('multiple public different hosts', function(t) {
-  var net1 = Net({ host: '127.0.0.1', port: 4848, scope: 'public'})
-  var net2 = Net({ host: '::1', port: 4847, scope: 'public'})
+  var net1 = Net({ host: '127.0.0.1', port: 4854, scope: 'public'})
+  var net2 = Net({ host: '::1', port: 4855, scope: 'public'})
 
   var combined1 = Compose([net1, shs])
   var combined2 = Compose([net2, shs])
@@ -447,8 +462,8 @@ tape('multiple public different hosts', function(t) {
 })
 
 tape('multiple scopes different hosts', function(t) {
-  var net1 = Net({ host: '127.0.0.1', port: 4848, scope: ['local', 'device', 'public']})
-  var net2 = Net({ host: '::1', port: 4847, scope: ['local', 'device', 'public']})
+  var net1 = Net({ host: '127.0.0.1', port: 4856, scope: ['local', 'device', 'public']})
+  var net2 = Net({ host: '::1', port: 4857, scope: ['local', 'device', 'public']})
 
   var combined1 = Compose([net1, shs])
   var combined2 = Compose([net2, shs])
