@@ -103,11 +103,10 @@ module.exports = function (ary, wrap) {
     parse: parse,
     stringify: function (scope) {
       var _ary = []
-      var proto = head(ary)
-      var trans = tail(ary)
       var v = proto.stringify(scope)
       if(!v) return
       else {
+        // if true, more than one hostname needs to be updated
         if (v.split(';').length > 1) {
           var addresses = v.split(';')
           addresses.forEach(a => {

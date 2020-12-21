@@ -120,14 +120,19 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
         return null
       }
 
-      // Remove IPv6 scopeid suffix, if any, e.g. `%wlan0`
-      return Array.isArray(resultHost)
-      // if an array of external hostnames is supplied,
-      // return all of them in an ';' separated address string
-      ? resultHost.map((h) => {
-        return toAddress(h.replace(/(\%\w+)$/, ''), port)
-      }).join(';')
-      : toAddress(resultHost.replace(/(\%\w+)$/, ''), port)
+      return formatNetAddress(resultHost)
+
+      function formatNetAddress (resultHost) {
+        // convert to an array for easier formatting
+        if (isString(resultHost)) {
+          resultHost = [resultHost]
+        }
+        
+        return resultHost.map((h) => {
+          // Remove IPv6 scopeid suffix, if any, e.g. `%wlan0`
+          return toAddress(h.replace(/(\%\w+)$/, ''), port)
+        }).join(';')
+      }
     }
   }
 }

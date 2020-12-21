@@ -137,21 +137,22 @@ module.exports = function (opts = {}) {
         return null
       }
 
-      return Array.isArray(resultHost)
-      ? resultHost.map((h) => {
-        return URL.format({
-          protocol: secure ? 'wss' : 'ws',
-          slashes: true,
-          hostname: h,
-          port: (secure ? port == 443 : port == 80) ? undefined : port
-        })
-      }).join(';')
-      : URL.format({
-        protocol: secure ? 'wss' : 'ws',
-        slashes: true,
-        hostname: resultHost,
-        port: (secure ? port == 443 : port == 80) ? undefined : port
-      })
+      return formatWsAddress(resultHost)
+
+      function formatWsAddress(resultHost) {
+        if (typeof resultHost === 'string') {
+          resultHost = [resultHost]
+        }
+
+        return resultHost.map((h) => {
+          return URL.format({
+            protocol: secure ? 'wss' : 'ws',
+            slashes: true,
+            hostname: h,
+            port: (secure ? port == 443 : port == 80) ? undefined : port
+          })
+        }).join(';')
+      }
     },
     parse: function (str) {
       var addr = URL.parse(str)
