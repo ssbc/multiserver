@@ -120,10 +120,15 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
         return null
       }
 
-      // Remove IPv6 scopeid suffix, if any, e.g. `%wlan0`
-      resultHost = resultHost.replace(/(\%\w+)$/, '')
-
-      return toAddress(resultHost, port)
+      // convert to an array for easier formatting
+      if (isString(resultHost)) {
+        resultHost = [resultHost]
+      }
+      
+      return resultHost.map((h) => {
+        // Remove IPv6 scopeid suffix, if any, e.g. `%wlan0`
+        return toAddress(h.replace(/(\%\w+)$/, ''), port)
+      }).join(';')
     }
   }
 }

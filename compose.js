@@ -102,14 +102,26 @@ module.exports = function (ary, wrap) {
     },
     parse: parse,
     stringify: function (scope) {
-      var none
-      var _ary = ary.map(function (e) {
-        var v = e.stringify(scope)
-        if(!v) none = true
-        else return v
-      })
-      if(none) return
-      return SE.stringify(_ary)
+      var _ary = []
+      var v = proto.stringify(scope)
+      if(!v) return
+      else {
+        // if true, more than one hostname needs to be updated
+        if (v.split(';').length > 1) {
+          var addresses = v.split(';')
+          addresses.forEach(a => {
+            _ary.push(a)
+          })
+        }
+        else _ary.push(v)
+      }
+      return _ary.map(e => {
+        var singleAddr = [e].concat(trans.map(t => {
+          return t.stringify(scope)
+        }))
+
+        return SE.stringify(singleAddr)
+      }).join(';')
     }
   }
 }
