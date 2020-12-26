@@ -1,11 +1,11 @@
 {
   "name": "multiserver",
   "description": "write a server which works over many protocols at once, or connect to the same",
-  "version": "3.6.0",
-  "homepage": "https://github.com/dominictarr/multiserver",
+  "version": "3.7.0",
+  "homepage": "https://github.com/ssb-js/multiserver",
   "repository": {
     "type": "git",
-    "url": "git://github.com/dominictarr/multiserver.git"
+    "url": "git://github.com/ssb-js/multiserver.git"
   },
   "dependencies": {
     "debug": "^4.1.1",
