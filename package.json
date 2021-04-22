@@ -12,7 +12,7 @@
     "multicb": "^1.2.2",
     "multiserver-scopes": "^1.0.0",
     "pull-stream": "^3.6.1",
-    "pull-ws": "^3.3.0",
+    "pull-websocket": "^3.4.0",
     "secret-handshake": "^1.1.16",
     "separator-escape": "0.0.1",
     "socks": "^2.2.3",
