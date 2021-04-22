@@ -130,19 +130,25 @@ module.exports = function (opts = {}) {
 
       const port = opts.server ? opts.server.address().port : opts.port
       const externalHost = targetScope === 'public' && opts.external
-      const resultHost = externalHost || opts.host || scopes.host(targetScope)
+      let resultHost = externalHost || opts.host || scopes.host(targetScope)
 
       if (resultHost == null) {
         // The device has no network interface for a given `targetScope`.
         return null
       }
 
-      return URL.format({
-        protocol: secure ? 'wss' : 'ws',
-        slashes: true,
-        hostname: resultHost,
-        port: (secure ? port == 443 : port == 80) ? undefined : port
-      })
+      if (typeof resultHost === 'string') {
+        resultHost = [resultHost]
+      }
+
+      return resultHost.map((h) => {
+        return URL.format({
+          protocol: secure ? 'wss' : 'ws',
+          slashes: true,
+          hostname: h,
+          port: (secure ? port == 443 : port == 80) ? undefined : port
+        })
+      }).join(';')
     },
     parse: function (str) {
       var addr = URL.parse(str)

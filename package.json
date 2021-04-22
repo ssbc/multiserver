@@ -1,11 +1,11 @@
 {
   "name": "multiserver",
   "description": "write a server which works over many protocols at once, or connect to the same",
-  "version": "3.6.0",
-  "homepage": "https://github.com/dominictarr/multiserver",
+  "version": "3.7.0",
+  "homepage": "https://github.com/ssb-js/multiserver",
   "repository": {
     "type": "git",
-    "url": "git://github.com/dominictarr/multiserver.git"
+    "url": "git://github.com/ssb-js/multiserver.git"
   },
   "dependencies": {
     "debug": "^4.1.1",
@@ -21,10 +21,11 @@
   "devDependencies": {
     "chloride": "^2.2.8",
     "pull-pushable": "^2.2.0",
-    "tape": "^4.8.0"
+    "tap-spec": "^5.0.0",
+    "tape": "^5.0.1"
   },
   "scripts": {
-    "test": "set -e; for t in test/*.js; do node $t; done"
+    "test": "tape test/*.js | tap-spec"
   },
   "browser": {
     "ws": false,

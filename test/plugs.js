@@ -22,7 +22,7 @@ var check = function (id, cb) {
 }
 
 var net = Net({port: 4848})
-var ws = Ws({port: 4848})
+var ws = Ws({port: 4849})
 var shs = Shs({keys: keys, appKey: appKey, auth: function (id, cb) {
   check(id, cb)
 }})
@@ -34,14 +34,13 @@ var combined_ws = Compose([ws, shs])
 var has_ipv6 = process.env.TRAVIS === undefined
 
 tape('parse, stringify', function (t) {
-
   t.equal(
     net.stringify('device'),
     'net:localhost:4848'
   )
   t.equal(
     ws.stringify('device'),
-    'ws://localhost:4848'
+    'ws://localhost:4849'
   )
   t.equal(
     shs.stringify(),
@@ -76,19 +75,19 @@ function echo (stream) {
 }
 
 tape('combined', function (t) {
-  var close = combined.server(echo)
-
-  combined.client(combined.stringify('device'), function (err, stream) {
-    if(err) throw err
-    pull(
-      pull.values([Buffer.from('hello world')]),
-      stream,
-      pull.collect(function (err, ary) {
-        if(err) throw err
-        t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        close(function() {t.end()})
-      })
-    )
+  var close = combined.server(echo, null, () => {
+    combined.client(combined.stringify('device'), function (err, stream) {
+      if(err) throw err
+      pull(
+        pull.values([Buffer.from('hello world')]),
+        stream,
+        pull.collect(function (err, ary) {
+          if(err) throw err
+          t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+          close(t.end)
+        })
+      )
+    })
   })
 })
 
@@ -101,10 +100,117 @@ if (has_ipv6)
       }),
       shs
     ])
-    var close = combined.server(echo)
-    var addr = combined.stringify('device')
-    console.log('addr', addr)
+    var close = combined.server(echo, null, () => {
+      var addr = combined.stringify('device')
+      console.log('addr', addr)
 
+      combined.client(addr, function (err, stream) {
+        if(err) throw err
+        t.ok(stream.address, 'has an address')
+        pull(
+          pull.values([Buffer.from('hello world')]),
+          stream,
+          pull.collect(function (err, ary) {
+            if(err) throw err
+            t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
+            close(t.end)
+          })
+        )
+      })
+    })
+  })
+
+if (has_ipv6)
+  tape('stringify() does not show scopeid from ipv6', function (t) {
+    var combined = Compose([
+      Net({
+        scope: 'private',
+        port: 4849,
+        host: 'fe80::1065:74a4:4016:6266%wlan0'
+      }),
+      shs
+    ])
+    var addr = combined.stringify('private')
+    t.equal(
+      addr,
+      'net:fe80::1065:74a4:4016:6266:4849~shs:' +
+      keys.publicKey.toString('base64')
+    )
+    t.end()
+  })
+
+tape('net: do not listen on all addresses', function (t) {
+  var combined = Compose([
+    Net({
+      scope: 'device',
+      port: 4850,
+      host: 'localhost',
+      //      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
+    }),
+    shs
+  ])
+  var close = combined.server(echo, null, () => {
+    //fake
+    var fake_combined = Compose([
+      Net({
+        scope: 'local',
+        port: 4851,
+        //host: 'localhost',
+        //      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
+      }),
+      shs
+    ])
+
+    var addr = fake_combined.stringify('local') // returns external
+    console.log('addr local scope', addr)
+    combined.client(addr, function (err, stream) {
+      t.ok(err, 'should only listen on localhost')
+      close(t.end)
+    })
+  })
+})
+
+tape('net: do not crash if listen() fails', function(t) {
+  var combined = Compose([
+    Net({
+      scope: 'private',
+      port: 4852,
+      host: '$not-a-valid-ip-addr$',
+    }),
+    shs
+  ])
+  var close = combined.server(echo, null, function(err) {
+    t.ok(err, 'should propagate listen error up')
+    t.match(err.code, /^(ENOTFOUND|EAI_AGAIN)$/, 'the error is expected')
+    close(() => t.end())
+  })
+})
+
+tape('net: stringify support external being a string', function(t) {
+  var combined = Compose([
+    Net({
+      scope: 'public',
+      port: 4853,
+      host: 'localhost',
+      external: 'scuttlebutt.nz'
+    }),
+    shs
+  ])
+  var addr = combined.stringify('public')
+  t.equals(addr, 'net:scuttlebutt.nz:4853~shs:' + keys.publicKey.toString('base64'))
+  t.end()
+})
+
+tape('combined, unix', function (t) {
+  var combined = Compose([
+    Unix({
+      server: true,
+    }),
+    shs
+  ])
+  var close = combined.server(echo, null, () => {
+    var addr = combined.stringify('device')
+    console.log('unix addr', addr)
 
     combined.client(addr, function (err, stream) {
       if(err) throw err
@@ -115,103 +221,10 @@ if (has_ipv6)
         pull.collect(function (err, ary) {
           if(err) throw err
           t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-          close(function() {t.end()})
+          close(t.end)
         })
       )
     })
-  })
-
-if (has_ipv6)
-  tape('stringify() does not show scopeid from ipv6', function (t) {
-    var combined = Compose([
-      Net({
-        scope: 'private',
-        port: 4848,
-        host: 'fe80::1065:74a4:4016:6266%wlan0'
-      }),
-      shs
-    ])
-    var addr = combined.stringify('private')
-    t.equal(
-      addr,
-      'net:fe80::1065:74a4:4016:6266:4848~shs:' +
-      keys.publicKey.toString('base64')
-    )
-    t.end()
-  })
-
-tape('net: do not listen on all addresses', function (t) {
-  var combined = Compose([
-    Net({
-      scope: 'device',
-      port: 4848,
-      host: 'localhost',
-      //      external: scopes.host('private') // unroutable IP, but not localhost (e.g. 192.168 ...)
-    }),
-    shs
-  ])
-  var close = combined.server(echo)
-
-  //fake
-  var fake_combined = Compose([
-    Net({
-      scope: 'local',
-      port: 4848,
-      //host: 'localhost',
-      //      external: scopes.host('local') // unroutable IP, but not localhost (e.g. 192.168 ...)
-    }),
-    shs
-  ])
-
-  var addr = fake_combined.stringify('local') // returns external
-  console.log('addr local scope', addr)
-  combined.client(addr, function (err, stream) {
-    t.ok(err, 'should only listen on localhost')
-    close(function() {t.end()})
-  })
-})
-
-tape('net: do not crash if listen() fails', function(t) {
-  var combined = Compose([
-    Net({
-      scope: 'private',
-      port: 4848,
-      host: '$not-a-valid-ip-addr$',
-    }),
-    shs
-  ])
-  var close = combined.server(echo, function() {}, function(err) {
-    t.ok(err, 'should propagate listen error up')
-    t.equal(err.code, 'ENOTFOUND', 'the error is expected')
-    close(function() {t.end()})
-  })
-})
-
-tape('combined, unix', function (t) {
-  var combined = Compose([
-    Unix({
-      server: true,
-    }),
-    shs
-  ])
-  var close = combined.server(echo)
-  var addr = combined.stringify('device')
-  console.log('unix addr', addr)
-
-  combined.client(addr, function (err, stream) {
-    if(err) throw err
-    t.ok(stream.address, 'has an address')
-    pull(
-      pull.values([Buffer.from('hello world')]),
-      stream,
-      pull.collect(function (err, ary) {
-        if(err) throw err
-        t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-        close(function() {
-          t.end()
-        })
-      })
-    )
   })
 })
 
@@ -221,7 +234,6 @@ tape('ws with combined', function (t) {
     t.ok(stream.address, 'has an address')
     echo(stream)
   }, null, function () {
-
     combined_ws.client(combined_ws.stringify(), function (err, stream) {
       if(err) throw err
       t.ok(stream.address, 'has an address')
@@ -236,7 +248,7 @@ tape('ws with combined', function (t) {
         }),
         pull.collect(function (err, ary) {
           t.equal(Buffer.concat(ary).toString(), 'HELLO WORLD')
-          close(function() {t.end()})
+          close(t.end)
         })
       )
     })
@@ -244,7 +256,6 @@ tape('ws with combined', function (t) {
 })
 
 tape('error if try to connect on wrong protocol', function (t) {
-
   t.equal(combined_ws.parse(combined.stringify()), null)
 
   combined_ws.client(combined.stringify(), function (err, stream) {
@@ -254,30 +265,29 @@ tape('error if try to connect on wrong protocol', function (t) {
 })
 
 tape('shs with seed', function (t) {
+  var close = combined.server(echo, null, () => {
 
-  var close = combined.server(echo)
+    var seed = cl.crypto_hash_sha256(Buffer.from('TEST SEED'))
+    var bob = cl.crypto_sign_seed_keypair(seed)
 
-  var seed = cl.crypto_hash_sha256(Buffer.from('TEST SEED'))
-  var bob = cl.crypto_sign_seed_keypair(seed)
+    var checked
+    check = function (id, cb) {
+      checked = id
+      if(id.toString('base64') === bob.publicKey.toString('base64'))
+        cb(null, true)
+      else
+        cb(null, false)
+    }
 
-  var checked
-  check = function (id, cb) {
-    checked = id
-    if(id.toString('base64') === bob.publicKey.toString('base64'))
-      cb(null, true)
-    else
-      cb(null, false)
-  }
+    var addr_with_seed = combined.stringify()+':'+seed.toString('base64')
 
-  var addr_with_seed = combined.stringify()+':'+seed.toString('base64')
-
-  combined.client(addr_with_seed, function (err, stream) {
-    t.notOk(err)
-    t.deepEqual(checked, bob.publicKey)
-    stream.source(true, function () {})
-    close(function() {t.end()})
+    combined.client(addr_with_seed, function (err, stream) {
+      t.notOk(err)
+      t.deepEqual(checked, bob.publicKey)
+      stream.source(true, function () {})
+      close(t.end)
+    })
   })
-
 })
 
 tape('ws default port', function (t) {
@@ -325,7 +335,6 @@ tape('wss with key and cert', function (t) {
 var onion = Onion({scope: 'public'})
 
 tape('onion plug', function (t) {
-
   // onion has no server
   t.equal(onion.stringify('public'), null)
   t.equal(onion.stringify('device'), null)
@@ -344,7 +353,6 @@ tape('onion plug', function (t) {
 
   //should not return an address
   t.notOk(oshs.stringify())
-
   t.end()
 })
 
@@ -388,7 +396,6 @@ testServerId(combined_ws, 'ws')
 
 
 function testAbort (name, combined) {
-
   tape(name+', aborted', function (t) {
     var close = combined.server(function onConnection() {
       throw new Error('should never happen')
@@ -447,8 +454,8 @@ testErrorAddress(combined, 'net')
 testErrorAddress(combined_ws, 'ws')
 
 tape('multiple public different hosts', function(t) {
-  var net1 = Net({ host: '127.0.0.1', port: 4848, scope: 'public'})
-  var net2 = Net({ host: '::1', port: 4847, scope: 'public'})
+  var net1 = Net({ host: '127.0.0.1', port: 4854, scope: 'public'})
+  var net2 = Net({ host: '::1', port: 4855, scope: 'public'})
 
   var combined1 = Compose([net1, shs])
   var combined2 = Compose([net2, shs])
@@ -462,8 +469,8 @@ tape('multiple public different hosts', function(t) {
 })
 
 tape('multiple scopes different hosts', function(t) {
-  var net1 = Net({ host: '127.0.0.1', port: 4848, scope: ['local', 'device', 'public']})
-  var net2 = Net({ host: '::1', port: 4847, scope: ['local', 'device', 'public']})
+  var net1 = Net({ host: '127.0.0.1', port: 4856, scope: ['local', 'device', 'public']})
+  var net2 = Net({ host: '::1', port: 4857, scope: ['local', 'device', 'public']})
 
   var combined1 = Compose([net1, shs])
   var combined2 = Compose([net2, shs])
@@ -473,5 +480,134 @@ tape('multiple scopes different hosts', function(t) {
     [combined1.stringify('public'), combined2.stringify('public')].join(';')
   )
 
+  t.end()
+})
+
+tape('net: external is a string', function (t) {
+  var net = Net({
+    external: 'domain.de',
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  t.equal(net.stringify('public'), 'net:domain.de:9966')
+  t.equal(net.stringify('local'), null)
+  t.equal(net.stringify('device'), null)
+  t.end()
+})
+
+tape('net: external is an array', function (t) {
+  var net = Net({
+    external: ['domain.de', 'funtime.net'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  t.equal(net.stringify('public'), 'net:domain.de:9966;net:funtime.net:9966')
+  t.equal(net.stringify('local'), null)
+  t.equal(net.stringify('device'), null)
+  t.end()
+})
+
+tape('net: external is an array w/ a single entry & shs transform', function (t) {
+  var net = Net({
+    external: ['domain.de'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  var combined = Compose([net, shs])
+  t.equal(
+    combined.stringify('public'),
+    'net:domain.de:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw='
+  )
+  t.end()
+})
+
+tape('net: external is an array w/ multiple entries & shs transform', function (t) {
+  var net = Net({
+    external: ['domain.de', 'funtime.net'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  var combined = Compose([net, shs])
+  t.equal(
+    combined.stringify('public'),
+    'net:domain.de:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=;net:funtime.net:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw='
+  )
+  t.end()
+})
+
+tape('ws: external is a string', function (t) {
+  var ws = Ws({
+    external: 'domain.de',
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  t.equal(ws.stringify('public'), 'ws://domain.de:9966')
+  t.equal(ws.stringify('local'), null)
+  t.equal(ws.stringify('device'), null)
+  t.end()
+})
+
+
+tape('ws: external is an array', function (t) {
+  var ws = Ws({
+    external: ['domain.de', 'funtime.net'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  t.equal(ws.stringify('public'), 'ws://domain.de:9966;ws://funtime.net:9966')
+  t.equal(ws.stringify('local'), null)
+  t.equal(ws.stringify('device'), null)
+  t.end()
+})
+
+tape('ws: external is an array w/ a single entry & shs transform', function (t) {
+  var ws = Ws({
+    external: ['domain.de'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  var combined = Compose([ws, shs])
+  t.equal(
+    combined.stringify('public'),
+    'ws://domain.de:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw='
+  )
+  t.end()
+})
+
+tape('ws: external is an array w/ multiple entries & shs transform', function (t) {
+  var ws = Ws({
+    external: ['domain.de', 'funtime.net'],
+    scope: 'public',
+    port: '9966',
+    server: {
+      key: null,
+      address: function () { return {port: 9966}}
+    }})
+  var combined = Compose([ws, shs])
+  t.equal(
+    combined.stringify('public'),
+    'ws://domain.de:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw=;ws://funtime.net:9966~shs:+y42DK+BGzqvU00EWMKiyj4fITskSm+Drxq1Dt2s3Yw='
+  )
   t.end()
 })
