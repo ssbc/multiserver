@@ -439,21 +439,24 @@ function testErrorAddress(combined, type) {
       //the shs address won't actually parse, because it doesn't have the key in it
       //because the key is not known in a wrong number.
     }, function () {
-
       //very unlikely this is the address, which will give a wrong number at the server.
       var addr = combined.stringify().replace(/shs:......../, 'shs:XXXXXXXX')
       combined.client(addr, function (err, stream) {
         //client should see client auth rejected
         t.ok(err)
-        close(t.end)
+        close(() => {
+          if (type === 'ws') // we need to wait for the kill
+            setTimeout(t.end, 1100)
+          else
+            t.end()
+        })
       })
     })
   })
 }
 
 testErrorAddress(combined, 'net')
-// FIXME: ws server close is not working properly here
-//testErrorAddress(combined_ws, 'ws')
+testErrorAddress(combined_ws, 'ws')
 
 tape('multiple public different hosts', function(t) {
   var net1 = Net({ host: '127.0.0.1', port: 4854, scope: 'public'})

@@ -89,13 +89,11 @@ module.exports = function (opts = {}) {
 
       return function (cb) {
         debug('Closing server on %s:%d', opts.host, opts.port)
-        server.close((err) => {
-          wsServer.close(() => {
-            debug('after WS close', err)
-            if (err) console.error(err)
-            else debug('No longer listening on %s:%d', opts.host, opts.port)
-            if (cb) cb(err)
-          })
+        wsServer.close((err) => {
+          debug('after WS close', err)
+          if (err) console.error(err)
+          else debug('No longer listening on %s:%d', opts.host, opts.port)
+          if (cb) cb(err)
         })
       }
     },
