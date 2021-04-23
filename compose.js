@@ -87,7 +87,7 @@ module.exports = function (ary, wrap) {
     server: function (onConnection, onError, onStart) {
       onError = onError || function (err) {
         console.error('server error, from', err.address)
-        console.error(err.stack)
+        console.error(err)
       }
       return asyncify(proto.server(function (stream) {
         compose(
