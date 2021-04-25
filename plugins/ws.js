@@ -1,11 +1,11 @@
-var WS = require('pull-ws')
+var WS = require('pull-websocket')
 var URL = require('url')
 var pull = require('pull-stream/pull')
 var Map = require('pull-stream/throughs/map')
 var scopes = require('multiserver-scopes')
 var http = require('http')
-var https      = require('https')
-var fs         = require('fs')
+var https = require('https')
+var fs = require('fs')
 var debug = require('debug')('multiserver:ws')
 
 function safe_origin (origin, address, port) {
@@ -51,9 +51,7 @@ module.exports = function (opts = {}) {
     name: 'ws',
     scope: () => scope,
     server: function (onConnect, startedCb) {
-      if (WS.createServer == null) { 
-        return null
-      }
+      if (WS.createServer == null) return null
 
       // Maybe weird: this sets a random port each time that `server()` is run
       // whereas the net plugin sets the port when the outer function is run.
@@ -68,9 +66,10 @@ module.exports = function (opts = {}) {
         opts.cert = fs.readFileSync(opts.cert)
 
       var server = opts.server ||
-        (opts.key && opts.cert ? https.createServer({ key: opts.key, cert: opts.cert }, opts.handler) : http.createServer(opts.handler))
+          (opts.key && opts.cert ? https.createServer({ key: opts.key, cert: opts.cert }, opts.handler) : http.createServer(opts.handler))
 
-      WS.createServer(Object.assign({}, opts, {server: server}), function (stream) {
+      const serverOpts = Object.assign({}, opts, {server: server})
+      let wsServer = WS.createServer(serverOpts, function (stream) {
         stream.address = safe_origin(
           stream.headers.origin,
           stream.remoteAddress,
@@ -90,7 +89,8 @@ module.exports = function (opts = {}) {
 
       return function (cb) {
         debug('Closing server on %s:%d', opts.host, opts.port)
-        server.close(function(err) {
+        wsServer.close((err) => {
+          debug('after WS close', err)
           if (err) console.error(err)
           else debug('No longer listening on %s:%d', opts.host, opts.port)
           if (cb) cb(err)
@@ -117,7 +117,7 @@ module.exports = function (opts = {}) {
       stream.address = addr
 
       return function () {
-        stream.close(cb)
+        stream.close()
       }
     },
     stringify: function (targetScope = 'device') {
@@ -157,7 +157,3 @@ module.exports = function (opts = {}) {
     }
   }
 }
-
-
-
-
