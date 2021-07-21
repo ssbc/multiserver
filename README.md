@@ -225,9 +225,11 @@ TCP is a `net:{host}:{port}` port is not optional.
 
 ``` js
 var Net = require('multiserver/plugins/net')`
-Net({port: 8889, host: 'mydomain.com'}) => net
-net.stringify() => 'net:mydomain.com:8889'
+Net({port: 8889, host: 'mydomain.com'}).stringify()  => 'net:mydomain.com:8889'
+Net({port: 8889, host: 'fe80::1065:74a4:4016:6266:4849'}).stringify()  => 'net:fe80::1065:74a4:4016:6266:4849:8889'
+Net({port: 8889, host: 'fe80::1065:74a4:4016:6266:4849', scope: 'device'}).stringify()  => 'net:fe80::1065:74a4:4016:6266:4849:8889'
 ```
+
 ### `WebSockets({host,port,scope,handler?,key?,cert?})`
 
 create a websocket server. Since websockets are
