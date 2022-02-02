@@ -39,8 +39,9 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
   return {
     name: 'net',
     scope: () => scope,
-    server: function (onConnection, startedCb) {
+    server: function (onConnection, startedCB) {
       debug('Listening on %s:%d', host, port)
+      let tempStartedCB = startedCB
 
       // TODO: We convert `allowHalfOpen` to boolean for legacy reasons, this
       // might not be getting used anywhere but I'm too scared to change it.
@@ -50,16 +51,25 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
         pauseOnConnect
       }
 
-      var server = net.createServer(serverOpts, function (stream) {
+      const server = net.createServer(serverOpts, function (stream) {
         onConnection(toDuplex(stream))
       })
 
-      if (startedCb) server.addListener('error', startedCb)
+      server.addListener('error', function onError(err) {
+        if (tempStartedCB) {
+          tempStartedCB(err)
+          tempStartedCB = null
+        } else {
+          console.error(err)
+        }
+      })
 
-      server.listen(port, host, startedCb ? function () {
-        server.removeListener('error', startedCb)
-        startedCb();
-      } : startedCb)
+      server.listen(port, host, function onListening() {
+        if (tempStartedCB) {
+          tempStartedCB()
+          tempStartedCB = null
+        }
+      })
 
       return function (cb) {
         debug('Closing server on %s:%d', host, port)
@@ -124,7 +134,7 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
       if (isString(resultHost)) {
         resultHost = [resultHost]
       }
-      
+
       return resultHost.map((h) => {
         // Remove IPv6 scopeid suffix, if any, e.g. `%wlan0`
         return toAddress(h.replace(/(\%\w+)$/, ''), port)
