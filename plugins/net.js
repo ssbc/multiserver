@@ -11,8 +11,9 @@ try {
   // somewhere rather than checking whether `net == null`?
 }
 
-const isString = (s) => 'string' == typeof s
-const toAddress = (host, port) => ['net', host, port].join(':')
+function toAddress(host, port) {
+  return ['net', host, port].join(':')
+}
 
 function toDuplex(str) {
   const stream = toPull.duplex(str)
@@ -22,8 +23,9 @@ function toDuplex(str) {
 
 // Choose a dynamic port between 49152 and 65535
 // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
-const getRandomPort = () =>
-  Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
+function getRandomPort() {
+  return Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
+}
 
 module.exports = function Net({
   scope = 'device',
@@ -35,7 +37,7 @@ module.exports = function Net({
 }) {
   // Arguments are `scope` and `external` plus selected options for
   // `net.createServer()` and `server.listen()`.
-  host = host || (isString(scope) && scopes.host(scope))
+  host = host || (typeof scope === 'string' && scopes.host(scope))
   port = port || getRandomPort()
 
   function isAllowedScope(s) {
@@ -143,7 +145,7 @@ module.exports = function Net({
       }
 
       // convert to an array for easier formatting
-      if (isString(resultHost)) {
+      if (typeof resultHost === 'string') {
         resultHost = [resultHost]
       }
 

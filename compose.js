@@ -1,16 +1,13 @@
-const separator = '~'
-const escape = '!'
-const SE = require('separator-escape')(separator, escape)
+const SEPARATOR = '~'
+const ESCAPE = '!'
+const SE = require('separator-escape')(SEPARATOR, ESCAPE)
 
-const isArray = Array.isArray
-function isString(s) {
-  return 'string' === typeof s
+function head(x) {
+  return Array.isArray(x) ? x[0] : x
 }
-function head(opts) {
-  return isArray(opts) ? opts[0] : opts
-}
-function tail(opts) {
-  return isArray(opts) ? opts.slice(1) : []
+
+function tail(x) {
+  return Array.isArray(x) ? x.slice(1) : []
 }
 
 function compose(stream, transforms, cb) {
@@ -68,11 +65,11 @@ module.exports = function Compose(ary, wrap) {
   }
 
   function parseMaybe(str) {
-    return isString(str) ? parse(str) : str
+    return typeof str === 'string' ? parse(str) : str
   }
 
   return {
-    name: ary.map((e) => e.name).join(separator),
+    name: ary.map((e) => e.name).join(SEPARATOR),
 
     scope: proto.scope,
 
@@ -115,25 +112,21 @@ module.exports = function Compose(ary, wrap) {
     parse: parse,
 
     stringify(scope) {
-      const _ary = []
-      const v = proto.stringify(scope)
-      if (!v) return
+      const addresses = []
+      const fullAddress = proto.stringify(scope)
+      if (!fullAddress) return
       else {
-        // if true, more than one hostname needs to be updated
-        if (v.split(';').length > 1) {
-          const addresses = v.split(';')
-          addresses.forEach((a) => {
-            _ary.push(a)
-          })
-        } else _ary.push(v)
+        const splittedAddresses = fullAddress.split(';')
+        if (splittedAddresses.length > 1) {
+          // More than one hostname needs to be updated
+          addresses.push(...splittedAddresses)
+        } else {
+          addresses.push(fullAddress)
+        }
       }
-      return _ary
-        .map((e) => {
-          const singleAddr = [e].concat(
-            trans.map((t) => {
-              return t.stringify(scope)
-            })
-          )
+      return addresses
+        .map((addr) => {
+          const singleAddr = [addr].concat(trans.map((t) => t.stringify(scope)))
           return SE.stringify(singleAddr)
         })
         .join(';')
