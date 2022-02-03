@@ -25,14 +25,14 @@ function toDuplex(str) {
 const getRandomPort = () =>
   Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
 
-module.exports = ({
+module.exports = function Net({
   scope = 'device',
   host,
   port,
   external,
   allowHalfOpen,
   pauseOnConnect,
-}) => {
+}) {
   // Arguments are `scope` and `external` plus selected options for
   // `net.createServer()` and `server.listen()`.
   host = host || (isString(scope) && scopes.host(scope))
@@ -45,7 +45,7 @@ module.exports = ({
   return {
     name: 'net',
     scope: () => scope,
-    server: function (onConnection, startedCB) {
+    server(onConnection, startedCB) {
       debug('Listening on %s:%d', host, port)
       let tempStartedCB = startedCB
 
@@ -57,9 +57,12 @@ module.exports = ({
         pauseOnConnect,
       }
 
-      const server = net.createServer(serverOpts, function (stream) {
-        onConnection(toDuplex(stream))
-      })
+      const server = net.createServer(
+        serverOpts,
+        function connectionListener(stream) {
+          onConnection(toDuplex(stream))
+        }
+      )
 
       server.addListener('error', function onError(err) {
         if (tempStartedCB) {
@@ -77,38 +80,40 @@ module.exports = ({
         }
       })
 
-      return function (cb) {
+      return function closeNetServer(cb) {
         debug('Closing server on %s:%d', host, port)
-        server.close(function (err) {
+        server.close(function onNetServerClosing(err) {
           if (err) console.error(err)
           else debug('No longer listening on %s:%d', host, port)
           if (cb) cb(err)
         })
       }
     },
-    client: function (opts, cb) {
+
+    client(opts, cb) {
       let started = false
       const stream = net
         .connect(opts)
-        .on('connect', function () {
+        .on('connect', function onConnect() {
           if (started) return
           started = true
           cb(null, toDuplex(stream))
         })
-        .on('error', function (err) {
+        .on('error', function onError(err) {
           if (started) return
           started = true
           cb(err)
         })
 
-      return function () {
+      return function closeNetClient() {
         started = true
         stream.destroy()
         cb(new Error('multiserver.net: aborted'))
       }
     },
-    //MUST be net:<host>:<port>
-    parse: function (s) {
+
+    // MUST be net:<host>:<port>
+    parse(s) {
       if (net == null) return null
       const ary = s.split(':')
       if (ary.length < 3) return null
@@ -121,7 +126,8 @@ module.exports = ({
         port: port,
       }
     },
-    stringify: function (targetScope = 'device') {
+
+    stringify(targetScope = 'device') {
       if (isAllowedScope(targetScope) === false) {
         return null
       }

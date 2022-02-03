@@ -1,28 +1,28 @@
-const SHS = require('secret-handshake')
+const SecretHandshake = require('secret-handshake')
 const pull = require('pull-stream')
 
 function isString(s) {
   return 'string' === typeof s
 }
 
-module.exports = function (opts) {
-  const keys = SHS.toKeys(opts.keys || opts.seed)
+module.exports = function Shs(opts) {
+  const keys = SecretHandshake.toKeys(opts.keys || opts.seed)
   const appKey = isString(opts.appKey)
     ? Buffer.from(opts.appKey, 'base64')
     : opts.appKey
 
-  const server = SHS.createServer(
+  const server = SecretHandshake.createServer(
     keys,
     opts.auth || opts.authenticate,
     appKey,
     opts.timeout
   )
-  const client = SHS.createClient(keys, appKey, opts.timeout)
+  const client = SecretHandshake.createClient(keys, appKey, opts.timeout)
 
   return {
     name: 'shs',
-    create: function (_opts) {
-      return function (stream, cb) {
+    create(_opts) {
+      return function shsTransform(stream, cb) {
         function _cb(err, stream) {
           if (err) {
             //shs is designed so that we do not _know_ who is connecting if it fails,
@@ -40,7 +40,7 @@ module.exports = function (opts) {
         )
       }
     },
-    parse: function (str) {
+    parse(str) {
       const ary = str.split(':')
       if (ary[0] !== 'shs') return null
       let seed = undefined
@@ -56,7 +56,7 @@ module.exports = function (opts) {
 
       return { key: key, seed: seed }
     },
-    stringify: function () {
+    stringify() {
       if (!keys) return
       return 'shs:' + keys.publicKey.toString('base64')
     },
