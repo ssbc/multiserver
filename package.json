@@ -7,6 +7,10 @@
     "type": "git",
     "url": "git://github.com/ssb-js/multiserver.git"
   },
+  "files": [
+    "*.js",
+    "plugins/*.js"
+  ],
   "dependencies": {
     "debug": "^4.1.1",
     "multicb": "^1.2.2",
