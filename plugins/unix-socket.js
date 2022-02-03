@@ -8,7 +8,7 @@ const os = require('os')
 // hax on double transform
 let started = false
 
-module.exports = function (opts) {
+module.exports = function Unix(opts) {
   if (process.platform === 'win32') {
     opts.path =
       opts.path || path.join('\\\\?\\pipe', process.cwd(), 'multiserver')
@@ -23,10 +23,8 @@ module.exports = function (opts) {
   opts = opts || {}
   return {
     name: 'unix',
-    scope: function () {
-      return scope
-    },
-    server: function (onConnection, cb) {
+    scope: () => scope,
+    server(onConnection, cb) {
       if (started) return
 
       if (scope !== 'device') {
@@ -37,26 +35,29 @@ module.exports = function (opts) {
       debug('listening on socket %s', addr)
 
       const server = net
-        .createServer(opts, function (stream) {
+        .createServer(opts, function connectionListener(stream) {
           stream = toDuplex(stream)
           stream.address = addr
           onConnection(stream)
         })
         .listen(socket, cb)
 
-      server.on('error', function (e) {
-        if (e.code == 'EADDRINUSE') {
+      server.on('error', function onError(err) {
+        if (err.code === 'EADDRINUSE') {
           const clientSocket = new net.Socket()
-          clientSocket.on('error', function (e) {
-            if (e.code == 'ECONNREFUSED') {
+          clientSocket.on('error', function onClientSocketError(e) {
+            if (e.code === 'ECONNREFUSED') {
               fs.unlinkSync(socket)
               server.listen(socket)
             }
           })
 
-          clientSocket.connect({ path: socket }, function () {
-            debug('someone else is listening on socket!')
-          })
+          clientSocket.connect(
+            { path: socket },
+            function socketConnectionListener() {
+              debug('someone else is listening on socket!')
+            }
+          )
         }
       })
 
@@ -68,37 +69,39 @@ module.exports = function (opts) {
 
       started = true
 
-      return function () {
+      return function closeUnixSocketServer() {
         server.close()
       }
     },
-    client: function (opts, cb) {
+
+    client(opts, cb) {
       debug('unix socket client')
       let started = false
       const stream = net
         .connect(opts.path)
-        .on('connect', function () {
+        .on('connect', function onConnect() {
           if (started) return
           started = true
           var _stream = toDuplex(stream)
           _stream.address = addr
           cb(null, _stream)
         })
-        .on('error', function (err) {
+        .on('error', function onError(err) {
           debug('err? %o', err)
           if (started) return
           started = true
           cb(err)
         })
 
-      return function () {
+      return function closeUnixSocketClient() {
         started = true
         stream.destroy()
         cb(new Error('multiserver.unix: aborted'))
       }
     },
-    //MUST be unix:socket_path
-    parse: function (s) {
+
+    // MUST be unix:socket_path
+    parse(s) {
       const ary = s.split(':')
 
       // Immediately return if there's no path.
@@ -112,7 +115,8 @@ module.exports = function (opts) {
         path: ary.join(':'),
       }
     },
-    stringify: function (_scope) {
+
+    stringify(_scope) {
       if (scope !== _scope) return null
       return ['unix', socket].join(':')
     },

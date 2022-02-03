@@ -23,7 +23,7 @@ function compose(stream, transforms, cb) {
       stream.address = addr
       return cb(null, stream)
     } else
-      transforms[i](stream, function (err, _stream) {
+      transforms[i](stream, (err, _stream) => {
         if (!err && !stream) throw new Error('expected error or stream')
         if (_stream) _stream.meta = _stream.meta || stream.meta
         next(err, _stream, i + 1, err ? addr : addr + '~' + _stream.address)
@@ -32,7 +32,7 @@ function compose(stream, transforms, cb) {
 }
 
 function asyncify(f) {
-  return function (cb) {
+  return function fnAsAsync(cb) {
     if (f.length) return f(cb)
     if (cb) {
       let result
@@ -47,11 +47,12 @@ function asyncify(f) {
   }
 }
 
-module.exports = function (ary, wrap) {
-  if (!wrap)
-    wrap = function (e) {
-      return e
-    }
+function identity(x) {
+  return x
+}
+
+module.exports = function Compose(ary, wrap) {
+  if (!wrap) wrap = identity
   const proto = head(ary)
   const trans = tail(ary)
 
@@ -71,44 +72,39 @@ module.exports = function (ary, wrap) {
   }
 
   return {
-    name: ary
-      .map(function (e) {
-        return e.name
-      })
-      .join(separator),
+    name: ary.map((e) => e.name).join(separator),
+
     scope: proto.scope,
-    client: function (_opts, cb) {
+
+    client(_opts, cb) {
       const opts = parseMaybe(_opts)
       if (!opts) return cb(new Error('could not parse address:' + _opts))
-      return proto.client(head(opts), function (err, stream) {
+      return proto.client(head(opts), (err, stream) => {
         if (err) return cb(err)
         compose(
           wrap(stream),
-          trans.map(function (tr, i) {
-            return tr.create(opts[i + 1])
-          }),
+          trans.map((tr, i) => tr.create(opts[i + 1])),
           cb
         )
       })
     },
+
     // There should be a callback , called with
     // null when the server started to listen.
     // (net.server.listen is async for example)
-    server: function (onConnection, onError, onStart) {
+    server(onConnection, onError, onStart) {
       onError =
         onError ||
-        function (err) {
+        function onServerError(err) {
           console.error('server error, from', err.address)
           console.error(err)
         }
       return asyncify(
-        proto.server(function (stream) {
+        proto.server(function onComposedConnection(stream) {
           compose(
             wrap(stream),
-            trans.map(function (tr) {
-              return tr.create()
-            }),
-            function (err, stream) {
+            trans.map((tr) => tr.create()),
+            (err, stream) => {
               if (err) onError(err)
               else onConnection(stream)
             }
@@ -117,7 +113,7 @@ module.exports = function (ary, wrap) {
       )
     },
     parse: parse,
-    stringify: function (scope) {
+    stringify(scope) {
       const _ary = []
       const v = proto.stringify(scope)
       if (!v) return

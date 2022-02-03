@@ -2,16 +2,16 @@ const socks = require('socks').SocksClient
 const toPull = require('stream-to-pull-stream')
 const debug = require('debug')('multiserver:onion')
 
-module.exports = function (opts) {
+module.exports = function Onion(opts) {
   if (!socks) {
     //we are in browser
     debug('onion dialing through socks proxy not supported in browser setting')
     return {
       name: 'onion',
-      scope: function () {
+      scope() {
         return 'public'
       },
-      parse: function (s) {
+      parse(s) {
         return null
       },
     }
@@ -31,17 +31,15 @@ module.exports = function (opts) {
 
   return {
     name: 'onion',
-    scope: function () {
-      return opts.scope || 'public'
-    },
-    server: function (onConnection, cb) {
+    scope: () => opts.scope || 'public',
+    server(onConnection, cb) {
       cb(new Error('Use net plugin for onion server instead'))
     },
-    client: function (opts, cb) {
+    client(opts, cb) {
       let _socket, destroy
 
       function tryConnect(connectOpts, onFail) {
-        socks.createConnection(connectOpts, function (err, result) {
+        socks.createConnection(connectOpts, function onConnected(err, result) {
           if (err) return onFail(err)
 
           const socket = result.socket
@@ -74,19 +72,20 @@ module.exports = function (opts) {
         }
       }
 
-      tryConnect(connectOpts(daemonProxyOpts), function (err) {
-        tryConnect(connectOpts(browserProxyOpts), function (err) {
+      tryConnect(connectOpts(daemonProxyOpts), (err) => {
+        tryConnect(connectOpts(browserProxyOpts), (err) => {
           cb(err)
         })
       })
 
-      return function () {
+      return function closeOnionClient() {
         if (_socket) _socket.destroy()
         else destroy = true
       }
     },
-    //MUST be onion:<host>:<port>
-    parse: function (s) {
+
+    // MUST be onion:<host>:<port>
+    parse(s) {
       const ary = s.split(':')
       if (ary.length < 3) return null
       if ('onion' !== ary.shift()) return null
@@ -98,7 +97,7 @@ module.exports = function (opts) {
         port: port,
       }
     },
-    stringify: function (scope) {
+    stringify(scope) {
       return null
     },
   }

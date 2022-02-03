@@ -1,8 +1,8 @@
-module.exports = function (opts) {
+module.exports = function Noauth(opts) {
   return {
     name: 'noauth',
-    create: function (_opts) {
-      return function (stream, cb) {
+    create(_opts) {
+      return function noauthTransform(stream, cb) {
         cb(null, {
           remote: opts.keys.publicKey,
           auth: { allow: null, deny: null },
@@ -12,10 +12,10 @@ module.exports = function (opts) {
         })
       }
     },
-    parse: function (str) {
+    parse(str) {
       return {}
     },
-    stringify: function () {
+    stringify() {
       return 'noauth'
     },
   }

@@ -6,24 +6,17 @@ function split(str) {
   return isArray(str) ? str : str.split(';')
 }
 
-module.exports = function (plugs, wrap) {
-  plugs = plugs.map(function (e) {
-    return isArray(e) ? compose(e, wrap) : e
-  })
+module.exports = function Multiserver(plugs, wrap) {
+  plugs = plugs.map((e) => (isArray(e) ? compose(e, wrap) : e))
 
   const _self = {
-    name: plugs
-      .map(function (e) {
-        return e.name
-      })
-      .join(';'),
-    client: function (addr, cb) {
+    name: plugs.map((e) => e.name).join(';'),
+
+    client(addr, cb) {
       let plug
-      const _addr = split(addr).find(function (addr) {
-        //connect with the first plug that understands this string.
-        plug = plugs.find(function (plug) {
-          return plug.parse(addr) ? plug : null
-        })
+      const _addr = split(addr).find((addr) => {
+        // connect with the first plug that understands this string.
+        plug = plugs.find((plug) => (plug.parse(addr) ? plug : null))
         if (plug) return addr
       })
       if (plug) plug.client(_addr, cb)
@@ -34,7 +27,8 @@ module.exports = function (plugs, wrap) {
           )
         )
     },
-    server: function (onConnect, onError, startedCb) {
+
+    server(onConnect, onError, startedCb) {
       //start all servers
 
       if (!startedCb) {
@@ -51,45 +45,41 @@ module.exports = function (plugs, wrap) {
       const started = multicb()
 
       const closes = plugs
-        .map(function (plug) {
-          return plug.server(onConnect, onError, started())
-        })
+        .map((plug) => plug.server(onConnect, onError, started()))
         .filter(Boolean)
 
       started(startedCb)
 
-      return function (cb) {
+      return function closeMultiserverServer(cb) {
         let done
         if (cb) done = multicb()
-        closes.forEach(function (close) {
+        for (const close of closes) {
           if (done && close.length) close(done())
           else close()
-        })
+        }
         if (done) done(cb)
       }
     },
-    stringify: function (scope) {
+
+    stringify(scope) {
       if (!scope) scope = 'device'
       return plugs
-        .filter(function (plug) {
+        .filter((plug) => {
           const _scope = plug.scope()
           return Array.isArray(_scope)
             ? ~_scope.indexOf(scope)
             : _scope === scope
         })
-        .map(function (plug) {
-          return plug.stringify(scope)
-        })
+        .map((plug) => plug.stringify(scope))
         .filter(Boolean)
         .join(';')
     },
-    //parse doesn't really make sense here...
-    //like, what if you only have a partial match?
-    //maybe just parse the ones you understand?
-    parse: function (str) {
-      return str.split(';').map(function (e, i) {
-        return plugs[i].parse(e)
-      })
+
+    // parse doesn't really make sense here...
+    // like, what if you only have a partial match?
+    // maybe just parse the ones you understand?
+    parse(str) {
+      return str.split(';').map((e, i) => plugs[i].parse(e))
     },
   }
   return _self

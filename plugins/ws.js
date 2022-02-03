@@ -1,4 +1,4 @@
-const WS = require('pull-websocket')
+const pullWS = require('pull-websocket')
 const URL = require('url')
 const pull = require('pull-stream/pull')
 const Map = require('pull-stream/throughs/map')
@@ -8,7 +8,7 @@ const https = require('https')
 const fs = require('fs')
 const debug = require('debug')('multiserver:ws')
 
-function safe_origin(origin, address, port) {
+function safeOrigin(origin, address, port) {
   //if the connection is not localhost, we shouldn't trust
   //the origin header. So, use address instead of origin
   //if origin not set, then it's definitely not a browser.
@@ -32,7 +32,7 @@ function safe_origin(origin, address, port) {
 const getRandomPort = () =>
   Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
 
-module.exports = function (opts = {}) {
+module.exports = function WS(opts = {}) {
   // This takes options for `WebSocket.Server()`:
   // https://github.com/websockets/ws/blob/master/doc/ws.md#new-websocketserveroptions-callback
 
@@ -48,8 +48,8 @@ module.exports = function (opts = {}) {
   return {
     name: 'ws',
     scope: () => scope,
-    server: function (onConnect, startedCb) {
-      if (WS.createServer == null) return null
+    server(onConnect, startedCb) {
+      if (pullWS.createServer == null) return null
 
       // Maybe weird: this sets a random port each time that `server()` is run
       // whereas the net plugin sets the port when the outer function is run.
@@ -68,23 +68,26 @@ module.exports = function (opts = {}) {
           : http.createServer(opts.handler))
 
       const serverOpts = Object.assign({}, opts, { server: server })
-      const wsServer = WS.createServer(serverOpts, function (stream) {
-        stream.address = safe_origin(
-          stream.headers.origin,
-          stream.remoteAddress,
-          stream.remotePort
-        )
-        onConnect(stream)
-      })
+      const wsServer = pullWS.createServer(
+        serverOpts,
+        function connectionListener(stream) {
+          stream.address = safeOrigin(
+            stream.headers.origin,
+            stream.remoteAddress,
+            stream.remotePort
+          )
+          onConnect(stream)
+        }
+      )
 
       if (!opts.server) {
         debug('Listening on %s:%d', opts.host, opts.port)
-        server.listen(opts.port, opts.host, function () {
+        server.listen(opts.port, opts.host, function onListening() {
           startedCb && startedCb(null, true)
         })
       } else startedCb && startedCb(null, true)
 
-      return function (cb) {
+      return function closeWsServer(cb) {
         debug('Closing server on %s:%d', opts.host, opts.port)
         wsServer.close((err) => {
           debug('after WS close', err)
@@ -94,7 +97,8 @@ module.exports = function (opts = {}) {
         })
       }
     },
-    client: function (addr, cb) {
+
+    client(addr, cb) {
       if (!addr.host) {
         addr.hostname = addr.hostname || opts.host || 'localhost'
         addr.slashes = true
@@ -102,9 +106,9 @@ module.exports = function (opts = {}) {
       }
       if ('string' !== typeof addr) addr = URL.format(addr)
 
-      const stream = WS.connect(addr, {
+      const stream = pullWS.connect(addr, {
         binaryType: opts.binaryType,
-        onConnect: function (err) {
+        onConnect: function connectionListener(err) {
           //ensure stream is a stream of node buffers
           stream.source = pull(stream.source, Map(Buffer.from.bind(Buffer)))
           cb(err, stream)
@@ -112,12 +116,13 @@ module.exports = function (opts = {}) {
       })
       stream.address = addr
 
-      return function () {
+      return function closeWsClient() {
         stream.close()
       }
     },
-    stringify: function (targetScope = 'device') {
-      if (WS.createServer == null) {
+
+    stringify(targetScope = 'device') {
+      if (pullWS.createServer == null) {
         return null
       }
       if (isAllowedScope(targetScope) === false) {
@@ -148,7 +153,8 @@ module.exports = function (opts = {}) {
         })
         .join(';')
     },
-    parse: function (str) {
+
+    parse(str) {
       const addr = URL.parse(str)
       if (!/^wss?\:$/.test(addr.protocol)) return null
       return addr
