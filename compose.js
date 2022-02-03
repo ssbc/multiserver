@@ -1,8 +1,8 @@
-var separator = '~',
-  escape = '!'
-var SE = require('separator-escape')(separator, escape)
+const separator = '~'
+const escape = '!'
+const SE = require('separator-escape')(separator, escape)
 
-var isArray = Array.isArray
+const isArray = Array.isArray
 function isString(s) {
   return 'string' === typeof s
 }
@@ -35,7 +35,7 @@ function asyncify(f) {
   return function (cb) {
     if (f.length) return f(cb)
     if (cb) {
-      var result
+      let result
       try {
         result = f()
       } catch (err) {
@@ -52,14 +52,14 @@ module.exports = function (ary, wrap) {
     wrap = function (e) {
       return e
     }
-  var proto = head(ary)
-  var trans = tail(ary)
+  const proto = head(ary)
+  const trans = tail(ary)
 
   function parse(str) {
-    var parts = SE.parse(str)
-    var out = []
-    for (var i = 0; i < parts.length; i++) {
-      var v = ary[i].parse(parts[i])
+    const parts = SE.parse(str)
+    const out = []
+    for (let i = 0; i < parts.length; i++) {
+      const v = ary[i].parse(parts[i])
       if (!v) return null
       out[i] = v
     }
@@ -78,7 +78,7 @@ module.exports = function (ary, wrap) {
       .join(separator),
     scope: proto.scope,
     client: function (_opts, cb) {
-      var opts = parseMaybe(_opts)
+      const opts = parseMaybe(_opts)
       if (!opts) return cb(new Error('could not parse address:' + _opts))
       return proto.client(head(opts), function (err, stream) {
         if (err) return cb(err)
@@ -118,13 +118,13 @@ module.exports = function (ary, wrap) {
     },
     parse: parse,
     stringify: function (scope) {
-      var _ary = []
-      var v = proto.stringify(scope)
+      const _ary = []
+      const v = proto.stringify(scope)
       if (!v) return
       else {
         // if true, more than one hostname needs to be updated
         if (v.split(';').length > 1) {
-          var addresses = v.split(';')
+          const addresses = v.split(';')
           addresses.forEach((a) => {
             _ary.push(a)
           })
@@ -132,12 +132,11 @@ module.exports = function (ary, wrap) {
       }
       return _ary
         .map((e) => {
-          var singleAddr = [e].concat(
+          const singleAddr = [e].concat(
             trans.map((t) => {
               return t.stringify(scope)
             })
           )
-
           return SE.stringify(singleAddr)
         })
         .join(';')

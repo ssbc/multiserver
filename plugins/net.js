@@ -1,4 +1,7 @@
-var net
+const toPull = require('stream-to-pull-stream')
+const scopes = require('multiserver-scopes')
+const debug = require('debug')('multiserver:net')
+let net
 try {
   net = require('net')
 } catch (_) {
@@ -8,15 +11,11 @@ try {
   // flag somewhere rather than checking whether `net == null`?
 }
 
-var toPull = require('stream-to-pull-stream')
-var scopes = require('multiserver-scopes')
-var debug = require('debug')('multiserver:net')
-
 const isString = (s) => 'string' == typeof s
 const toAddress = (host, port) => ['net', host, port].join(':')
 
 function toDuplex(str) {
-  var stream = toPull.duplex(str)
+  const stream = toPull.duplex(str)
   stream.address = toAddress(str.remoteAddress, str.remotePort)
   return stream
 }
@@ -88,13 +87,12 @@ module.exports = ({
       }
     },
     client: function (opts, cb) {
-      var started = false
-      var stream = net
+      let started = false
+      const stream = net
         .connect(opts)
         .on('connect', function () {
           if (started) return
           started = true
-
           cb(null, toDuplex(stream))
         })
         .on('error', function (err) {
@@ -112,10 +110,10 @@ module.exports = ({
     //MUST be net:<host>:<port>
     parse: function (s) {
       if (net == null) return null
-      var ary = s.split(':')
+      const ary = s.split(':')
       if (ary.length < 3) return null
       if ('net' !== ary.shift()) return null
-      var port = Number(ary.pop())
+      const port = Number(ary.pop())
       if (isNaN(port)) return null
       return {
         name: 'net',
