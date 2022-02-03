@@ -29,8 +29,9 @@ function safeOrigin(origin, address, port) {
 
 // Choose a dynamic port between 49152 and 65535
 // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports
-const getRandomPort = () =>
-  Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
+function getRandomPort() {
+  return Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
+}
 
 module.exports = function WS(opts = {}) {
   // This takes options for `WebSocket.Server()`:
@@ -104,7 +105,7 @@ module.exports = function WS(opts = {}) {
         addr.slashes = true
         addr = URL.format(addr)
       }
-      if ('string' !== typeof addr) addr = URL.format(addr)
+      if (typeof addr !== 'string') addr = URL.format(addr)
 
       const stream = pullWS.connect(addr, {
         binaryType: opts.binaryType,
@@ -143,14 +144,14 @@ module.exports = function WS(opts = {}) {
       }
 
       return resultHost
-        .map((h) => {
-          return URL.format({
+        .map((h) =>
+          URL.format({
             protocol: secure ? 'wss' : 'ws',
             slashes: true,
             hostname: h,
-            port: (secure ? port == 443 : port == 80) ? undefined : port,
+            port: (secure ? port === 443 : port === 80) ? undefined : port,
           })
-        })
+        )
         .join(';')
     },
 

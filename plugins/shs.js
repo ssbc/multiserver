@@ -1,15 +1,12 @@
 const SecretHandshake = require('secret-handshake')
 const pull = require('pull-stream')
 
-function isString(s) {
-  return 'string' === typeof s
-}
-
 module.exports = function Shs(opts) {
   const keys = SecretHandshake.toKeys(opts.keys || opts.seed)
-  const appKey = isString(opts.appKey)
-    ? Buffer.from(opts.appKey, 'base64')
-    : opts.appKey
+  const appKey =
+    typeof opts.appKey === 'string'
+      ? Buffer.from(opts.appKey, 'base64')
+      : opts.appKey
 
   const server = SecretHandshake.createServer(
     keys,
@@ -51,7 +48,7 @@ module.exports = function Shs(opts) {
         seed = Buffer.from(ary[2], 'base64')
         if (seed.length !== 32) return null
       }
-      var key = Buffer.from(ary[1], 'base64')
+      const key = Buffer.from(ary[1], 'base64')
       if (key.length !== 32) return null
       return { key: key, seed: seed }
     },
