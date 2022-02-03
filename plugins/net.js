@@ -13,9 +13,9 @@ var scopes = require('multiserver-scopes')
 var debug = require('debug')('multiserver:net')
 
 const isString = (s) => 'string' == typeof s
-const toAddress = (host, port) => ['net', host, port ].join(':')
+const toAddress = (host, port) => ['net', host, port].join(':')
 
-function toDuplex (str) {
+function toDuplex(str) {
   var stream = toPull.duplex(str)
   stream.address = toAddress(str.remoteAddress, str.remotePort)
   return stream
@@ -26,14 +26,21 @@ function toDuplex (str) {
 const getRandomPort = () =>
   Math.floor(49152 + (65535 - 49152 + 1) * Math.random())
 
-module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pauseOnConnect }) => {
+module.exports = ({
+  scope = 'device',
+  host,
+  port,
+  external,
+  allowHalfOpen,
+  pauseOnConnect,
+}) => {
   // Arguments are `scope` and `external` plus selected options for
   // `net.createServer()` and `server.listen()`.
   host = host || (isString(scope) && scopes.host(scope))
   port = port || getRandomPort()
 
-  function isAllowedScope (s) {
-    return s === scope || Array.isArray(scope) && scope.includes(s)
+  function isAllowedScope(s) {
+    return s === scope || (Array.isArray(scope) && scope.includes(s))
   }
 
   return {
@@ -48,7 +55,7 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
       // This should probably be removed when we do a major version bump.
       const serverOpts = {
         allowHalfOpen: Boolean(allowHalfOpen),
-        pauseOnConnect
+        pauseOnConnect,
       }
 
       const server = net.createServer(serverOpts, function (stream) {
@@ -73,7 +80,7 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
 
       return function (cb) {
         debug('Closing server on %s:%d', host, port)
-        server.close(function(err) {
+        server.close(function (err) {
           if (err) console.error(err)
           else debug('No longer listening on %s:%d', host, port)
           if (cb) cb(err)
@@ -82,15 +89,16 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
     },
     client: function (opts, cb) {
       var started = false
-      var stream = net.connect(opts)
+      var stream = net
+        .connect(opts)
         .on('connect', function () {
-          if(started) return
+          if (started) return
           started = true
 
           cb(null, toDuplex(stream))
         })
         .on('error', function (err) {
-          if(started) return
+          if (started) return
           started = true
           cb(err)
         })
@@ -105,14 +113,14 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
     parse: function (s) {
       if (net == null) return null
       var ary = s.split(':')
-      if(ary.length < 3) return null
-      if('net' !== ary.shift()) return null
+      if (ary.length < 3) return null
+      if ('net' !== ary.shift()) return null
       var port = Number(ary.pop())
-      if(isNaN(port)) return null
+      if (isNaN(port)) return null
       return {
         name: 'net',
         host: ary.join(':') || 'localhost',
-        port: port
+        port: port,
       }
     },
     stringify: function (targetScope = 'device') {
@@ -135,11 +143,12 @@ module.exports = ({ scope = 'device', host, port, external, allowHalfOpen, pause
         resultHost = [resultHost]
       }
 
-      return resultHost.map((h) => {
-        // Remove IPv6 scopeid suffix, if any, e.g. `%wlan0`
-        return toAddress(h.replace(/(\%\w+)$/, ''), port)
-      }).join(';')
-    }
+      return resultHost
+        .map((h) => {
+          // Remove IPv6 scopeid suffix, if any, e.g. `%wlan0`
+          return toAddress(h.replace(/(\%\w+)$/, ''), port)
+        })
+        .join(';')
+    },
   }
 }
-

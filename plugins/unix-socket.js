@@ -10,9 +10,11 @@ var started = false
 
 module.exports = function (opts) {
   if (process.platform === 'win32') {
-    opts.path = opts.path || path.join('\\\\?\\pipe', process.cwd(), 'multiserver')
+    opts.path =
+      opts.path || path.join('\\\\?\\pipe', process.cwd(), 'multiserver')
   } else {
-    opts.path = opts.path ||  fs.mkdtempSync(path.join(os.tmpdir(), 'multiserver-'))
+    opts.path =
+      opts.path || fs.mkdtempSync(path.join(os.tmpdir(), 'multiserver-'))
   }
 
   const socket = path.join(opts.path, 'socket')
@@ -21,34 +23,38 @@ module.exports = function (opts) {
   opts = opts || {}
   return {
     name: 'unix',
-    scope: function() { return scope },
+    scope: function () {
+      return scope
+    },
     server: function (onConnection, cb) {
       if (started) return
 
-      if (scope !== "device") {
+      if (scope !== 'device') {
         debug('Insecure scope for unix socket! Reverting to device scope')
         scope = 'device'
       }
 
       debug('listening on socket %s', addr)
 
-      var server = net.createServer(opts, function (stream) {
-        stream = toDuplex(stream)
-        stream.address = addr
-        onConnection(stream)
-      }).listen(socket, cb)
+      var server = net
+        .createServer(opts, function (stream) {
+          stream = toDuplex(stream)
+          stream.address = addr
+          onConnection(stream)
+        })
+        .listen(socket, cb)
 
       server.on('error', function (e) {
         if (e.code == 'EADDRINUSE') {
           var clientSocket = new net.Socket()
-          clientSocket.on('error', function(e) {
+          clientSocket.on('error', function (e) {
             if (e.code == 'ECONNREFUSED') {
               fs.unlinkSync(socket)
               server.listen(socket)
             }
           })
 
-          clientSocket.connect({ path: socket }, function() {
+          clientSocket.connect({ path: socket }, function () {
             debug('someone else is listening on socket!')
           })
         }
@@ -69,9 +75,10 @@ module.exports = function (opts) {
     client: function (opts, cb) {
       debug('unix socket client')
       var started = false
-      var stream = net.connect(opts.path)
+      var stream = net
+        .connect(opts.path)
         .on('connect', function () {
-          if(started) return
+          if (started) return
           started = true
 
           var _stream = toDuplex(stream)
@@ -80,7 +87,7 @@ module.exports = function (opts) {
         })
         .on('error', function (err) {
           debug('err? %o', err)
-          if(started) return
+          if (started) return
           started = true
           cb(err)
         })
@@ -96,19 +103,19 @@ module.exports = function (opts) {
       var ary = s.split(':')
 
       // Immediately return if there's no path.
-      if(ary.length < 2) return null
+      if (ary.length < 2) return null
 
       // Immediately return if the first item isn't 'unix'.
-      if('unix' !== ary.shift()) return null
+      if ('unix' !== ary.shift()) return null
 
       return {
         name: '',
-        path: ary.join(':')
+        path: ary.join(':'),
       }
     },
     stringify: function (_scope) {
-      if(scope !== _scope) return null
+      if (scope !== _scope) return null
       return ['unix', socket].join(':')
-    }
+    },
   }
 }
