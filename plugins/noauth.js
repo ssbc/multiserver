@@ -8,7 +8,7 @@ module.exports = function (opts) {
           auth: { allow: null, deny: null },
           source: stream.source,
           sink: stream.sink,
-          address: 'noauth:' + opts.keys.publicKey.toString('base64')
+          address: 'noauth:' + opts.keys.publicKey.toString('base64'),
         })
       }
     },
@@ -17,6 +17,6 @@ module.exports = function (opts) {
     },
     stringify: function () {
       return 'noauth'
-    }
+    },
   }
 }
