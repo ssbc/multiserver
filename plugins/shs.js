@@ -1,23 +1,23 @@
-var SHS = require('secret-handshake')
-var pull = require('pull-stream')
+const SHS = require('secret-handshake')
+const pull = require('pull-stream')
 
 function isString(s) {
   return 'string' === typeof s
 }
 
 module.exports = function (opts) {
-  var keys = SHS.toKeys(opts.keys || opts.seed)
-  var appKey = isString(opts.appKey)
+  const keys = SHS.toKeys(opts.keys || opts.seed)
+  const appKey = isString(opts.appKey)
     ? Buffer.from(opts.appKey, 'base64')
     : opts.appKey
 
-  var server = SHS.createServer(
+  const server = SHS.createServer(
     keys,
     opts.auth || opts.authenticate,
     appKey,
     opts.timeout
   )
-  var client = SHS.createClient(keys, appKey, opts.timeout)
+  const client = SHS.createClient(keys, appKey, opts.timeout)
 
   return {
     name: 'shs',
@@ -41,9 +41,9 @@ module.exports = function (opts) {
       }
     },
     parse: function (str) {
-      var ary = str.split(':')
+      const ary = str.split(':')
       if (ary[0] !== 'shs') return null
-      var seed = undefined
+      let seed = undefined
 
       //seed of private key to connect with, optional.
 

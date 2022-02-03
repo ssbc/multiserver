@@ -1,12 +1,12 @@
-var toDuplex = require('stream-to-pull-stream').duplex
-var net = require('net')
-var fs = require('fs')
-var path = require('path')
-var debug = require('debug')('multiserver:unix')
+const toDuplex = require('stream-to-pull-stream').duplex
+const net = require('net')
+const fs = require('fs')
+const path = require('path')
+const debug = require('debug')('multiserver:unix')
 const os = require('os')
 
 // hax on double transform
-var started = false
+let started = false
 
 module.exports = function (opts) {
   if (process.platform === 'win32') {
@@ -36,7 +36,7 @@ module.exports = function (opts) {
 
       debug('listening on socket %s', addr)
 
-      var server = net
+      const server = net
         .createServer(opts, function (stream) {
           stream = toDuplex(stream)
           stream.address = addr
@@ -46,7 +46,7 @@ module.exports = function (opts) {
 
       server.on('error', function (e) {
         if (e.code == 'EADDRINUSE') {
-          var clientSocket = new net.Socket()
+          const clientSocket = new net.Socket()
           clientSocket.on('error', function (e) {
             if (e.code == 'ECONNREFUSED') {
               fs.unlinkSync(socket)
@@ -74,13 +74,12 @@ module.exports = function (opts) {
     },
     client: function (opts, cb) {
       debug('unix socket client')
-      var started = false
-      var stream = net
+      let started = false
+      const stream = net
         .connect(opts.path)
         .on('connect', function () {
           if (started) return
           started = true
-
           var _stream = toDuplex(stream)
           _stream.address = addr
           cb(null, _stream)
@@ -100,7 +99,7 @@ module.exports = function (opts) {
     },
     //MUST be unix:socket_path
     parse: function (s) {
-      var ary = s.split(':')
+      const ary = s.split(':')
 
       // Immediately return if there's no path.
       if (ary.length < 2) return null

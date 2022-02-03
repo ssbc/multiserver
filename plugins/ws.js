@@ -1,12 +1,12 @@
-var WS = require('pull-websocket')
-var URL = require('url')
-var pull = require('pull-stream/pull')
-var Map = require('pull-stream/throughs/map')
-var scopes = require('multiserver-scopes')
-var http = require('http')
-var https = require('https')
-var fs = require('fs')
-var debug = require('debug')('multiserver:ws')
+const WS = require('pull-websocket')
+const URL = require('url')
+const pull = require('pull-stream/pull')
+const Map = require('pull-stream/throughs/map')
+const scopes = require('multiserver-scopes')
+const http = require('http')
+const https = require('https')
+const fs = require('fs')
+const debug = require('debug')('multiserver:ws')
 
 function safe_origin(origin, address, port) {
   //if the connection is not localhost, we shouldn't trust
@@ -43,7 +43,8 @@ module.exports = function (opts = {}) {
     return s === scope || (Array.isArray(scope) && ~scope.indexOf(s))
   }
 
-  var secure = (opts.server && !!opts.server.key) || (!!opts.key && !!opts.cert)
+  const secure =
+    (opts.server && !!opts.server.key) || (!!opts.key && !!opts.cert)
   return {
     name: 'ws',
     scope: () => scope,
@@ -60,14 +61,14 @@ module.exports = function (opts = {}) {
       if (typeof opts.key === 'string') opts.key = fs.readFileSync(opts.key)
       if (typeof opts.cert === 'string') opts.cert = fs.readFileSync(opts.cert)
 
-      var server =
+      const server =
         opts.server ||
         (opts.key && opts.cert
           ? https.createServer({ key: opts.key, cert: opts.cert }, opts.handler)
           : http.createServer(opts.handler))
 
       const serverOpts = Object.assign({}, opts, { server: server })
-      let wsServer = WS.createServer(serverOpts, function (stream) {
+      const wsServer = WS.createServer(serverOpts, function (stream) {
         stream.address = safe_origin(
           stream.headers.origin,
           stream.remoteAddress,
@@ -101,7 +102,7 @@ module.exports = function (opts = {}) {
       }
       if ('string' !== typeof addr) addr = URL.format(addr)
 
-      var stream = WS.connect(addr, {
+      const stream = WS.connect(addr, {
         binaryType: opts.binaryType,
         onConnect: function (err) {
           //ensure stream is a stream of node buffers
@@ -148,7 +149,7 @@ module.exports = function (opts = {}) {
         .join(';')
     },
     parse: function (str) {
-      var addr = URL.parse(str)
+      const addr = URL.parse(str)
       if (!/^wss?\:$/.test(addr.protocol)) return null
       return addr
     },

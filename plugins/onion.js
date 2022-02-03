@@ -1,6 +1,6 @@
-var socks = require('socks').SocksClient
-var toPull = require('stream-to-pull-stream')
-var debug = require('debug')('multiserver:onion')
+const socks = require('socks').SocksClient
+const toPull = require('stream-to-pull-stream')
+const debug = require('debug')('multiserver:onion')
 
 module.exports = function (opts) {
   if (!socks) {
@@ -18,12 +18,12 @@ module.exports = function (opts) {
   }
 
   opts = opts || {}
-  var daemonProxyOpts = {
+  const daemonProxyOpts = {
     ipaddress: '127.0.0.1',
     port: 9050,
     type: 5,
   }
-  var browserProxyOpts = {
+  const browserProxyOpts = {
     ipaddress: '127.0.0.1',
     port: 9150,
     type: 5,
@@ -38,18 +38,18 @@ module.exports = function (opts) {
       cb(new Error('Use net plugin for onion server instead'))
     },
     client: function (opts, cb) {
-      var _socket, destroy
+      let _socket, destroy
 
       function tryConnect(connectOpts, onFail) {
         socks.createConnection(connectOpts, function (err, result) {
           if (err) return onFail(err)
 
-          var socket = result.socket
+          const socket = result.socket
 
           if (destroy) return socket.destroy()
           _socket = socket
 
-          var duplexStream = toPull.duplex(socket)
+          const duplexStream = toPull.duplex(socket)
           duplexStream.address =
             'onion:' +
             connectOpts.destination.host +
@@ -87,10 +87,10 @@ module.exports = function (opts) {
     },
     //MUST be onion:<host>:<port>
     parse: function (s) {
-      var ary = s.split(':')
+      const ary = s.split(':')
       if (ary.length < 3) return null
       if ('onion' !== ary.shift()) return null
-      var port = +ary.pop()
+      const port = +ary.pop()
       if (isNaN(port)) return null
       return {
         name: 'onion',

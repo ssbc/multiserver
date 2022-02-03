@@ -1,6 +1,6 @@
-var compose = require('./compose')
-var isArray = Array.isArray
-var multicb = require('multicb')
+const multicb = require('multicb')
+const compose = require('./compose')
+const isArray = Array.isArray
 
 function split(str) {
   return isArray(str) ? str : str.split(';')
@@ -11,7 +11,7 @@ module.exports = function (plugs, wrap) {
     return isArray(e) ? compose(e, wrap) : e
   })
 
-  var _self = {
+  const _self = {
     name: plugs
       .map(function (e) {
         return e.name
@@ -48,9 +48,9 @@ module.exports = function (plugs, wrap) {
         }
       }
 
-      var started = multicb()
+      const started = multicb()
 
-      var closes = plugs
+      const closes = plugs
         .map(function (plug) {
           return plug.server(onConnect, onError, started())
         })
@@ -59,7 +59,7 @@ module.exports = function (plugs, wrap) {
       started(startedCb)
 
       return function (cb) {
-        var done
+        let done
         if (cb) done = multicb()
         closes.forEach(function (close) {
           if (done && close.length) close(done())
@@ -72,7 +72,7 @@ module.exports = function (plugs, wrap) {
       if (!scope) scope = 'device'
       return plugs
         .filter(function (plug) {
-          var _scope = plug.scope()
+          const _scope = plug.scope()
           return Array.isArray(_scope)
             ? ~_scope.indexOf(scope)
             : _scope === scope

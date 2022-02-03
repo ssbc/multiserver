@@ -1,26 +1,26 @@
-var tape = require('tape')
-var pull = require('pull-stream')
+const tape = require('tape')
+const pull = require('pull-stream')
 
-var Compose = require('../compose')
-var Net = require('../plugins/net')
-var Ws = require('../plugins/ws')
-var Shs = require('../plugins/shs')
-var MultiServer = require('../')
+const Compose = require('../compose')
+const Net = require('../plugins/net')
+const Ws = require('../plugins/ws')
+const Shs = require('../plugins/shs')
+const MultiServer = require('../')
 
-var cl = require('chloride')
-var seed = cl.crypto_hash_sha256(Buffer.from('TESTSEED'))
-var keys = cl.crypto_sign_seed_keypair(seed)
-var appKey = cl.crypto_hash_sha256(Buffer.from('TEST'))
+const cl = require('chloride')
+const seed = cl.crypto_hash_sha256(Buffer.from('TESTSEED'))
+const keys = cl.crypto_sign_seed_keypair(seed)
+const appKey = cl.crypto_hash_sha256(Buffer.from('TEST'))
 
-//this gets overwritten in the last test.
-var check = function (id, cb) {
+// this gets overwritten in the last test.
+let check = function (id, cb) {
   cb(null, true)
 }
 
-var net = Net({ port: 4848, scope: 'device' })
-var ws = Ws({ port: 4849, scope: 'device' })
+const net = Net({ port: 4848, scope: 'device' })
+const ws = Ws({ port: 4849, scope: 'device' })
 //console.log('appKey', appKey)
-var shs = Shs({
+const shs = Shs({
   keys: keys,
   appKey: appKey,
   auth: function (id, cb) {
@@ -28,17 +28,17 @@ var shs = Shs({
   },
 })
 
-var combined = Compose([net, shs])
-var combined_ws = Compose([ws, shs])
+const combined = Compose([net, shs])
+const combined_ws = Compose([ws, shs])
 
-var multi = MultiServer([combined, combined_ws])
+const multi = MultiServer([combined, combined_ws])
 
-var multi_ws = MultiServer([combined_ws])
-var multi_net = MultiServer([combined])
+const multi_ws = MultiServer([combined_ws])
+const multi_net = MultiServer([combined])
 
-var client_addr
+let client_addr
 
-var close
+let close
 
 //listen, with new async interface
 tape('listen', function (t) {
@@ -53,7 +53,7 @@ tape('listen', function (t) {
   )
 })
 
-var server_addr = 'fake:peer.ignore~nul:what;' + multi.stringify('device')
+const server_addr = 'fake:peer.ignore~nul:what;' + multi.stringify('device')
 //"fake" in a unkown protocol, just to make sure it gets skipped.
 
 tape('connect to either server (net)', function (t) {
@@ -67,7 +67,7 @@ tape('connect to either server (net)', function (t) {
       pull.values([Buffer.from('Hello')]),
       stream,
       pull.collect(function (err, ary) {
-        var data = Buffer.concat(ary).toString('utf8')
+        const data = Buffer.concat(ary).toString('utf8')
         console.log('OUTPUT', data)
         t.end()
       })
@@ -84,7 +84,7 @@ tape('connect to either server (ws)', function (t) {
       pull.values([Buffer.from('Hello')]),
       stream,
       pull.collect(function (err, ary) {
-        var data = Buffer.concat(ary).toString('utf8')
+        const data = Buffer.concat(ary).toString('utf8')
         console.log('OUTPUT', data)
         t.end()
       })

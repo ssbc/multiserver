@@ -1,5 +1,5 @@
-var test = require('tape')
-var Ms = require('../')
+const test = require('tape')
+const Ms = require('../')
 
 function sync_server(t) {
   return {
@@ -26,15 +26,15 @@ function async_server(t) {
 }
 
 test('all calls are sync', function (t) {
-  var ms = Ms([sync_server(t), sync_server(t)])
-  var close = ms.server()
+  const ms = Ms([sync_server(t), sync_server(t)])
+  const close = ms.server()
   t.plan(2)
   close()
 })
 
 test('all calls are async', function (t) {
-  var ms = Ms([async_server(t), async_server(t)])
-  var close = ms.server()
+  const ms = Ms([async_server(t), async_server(t)])
+  const close = ms.server()
   close(function (err) {
     t.error(err)
     t.equal(t.async_calls, 2, 'Should have waited for both servers')
@@ -45,11 +45,11 @@ test('all calls are async', function (t) {
 /*
 // this stops other tests for some reason?
 test.only('async caller, sync callee', function(t) {
-  var ms = Ms([
+  const ms = Ms([
     sync_server(t),
     sync_server(t)
   ])
-  var close = ms.server()
+  const close = ms.server()
   close(function(err) {
     t.error(err)
     t.end()
@@ -58,8 +58,8 @@ test.only('async caller, sync callee', function(t) {
 */
 
 test('all calls are async', function (t) {
-  var ms = Ms([async_server(t), async_server(t)])
-  var close = ms.server()
+  const ms = Ms([async_server(t), async_server(t)])
+  const close = ms.server()
   close(function (err) {
     t.error(err)
     t.equal(t.async_calls, 2, 'Should have waited for both servers')
@@ -68,8 +68,8 @@ test('all calls are async', function (t) {
 })
 
 test('async caller, mixed callees', function (t) {
-  var ms = Ms([sync_server(t), async_server(t)])
-  var close = ms.server()
+  const ms = Ms([sync_server(t), async_server(t)])
+  const close = ms.server()
   t.plan(3)
   close(function (err) {
     t.error(err)
