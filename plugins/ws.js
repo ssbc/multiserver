@@ -9,21 +9,21 @@ const fs = require('fs')
 const debug = require('debug')('multiserver:ws')
 
 function safeOrigin(origin, address, port) {
-  //if the connection is not localhost, we shouldn't trust
-  //the origin header. So, use address instead of origin
-  //if origin not set, then it's definitely not a browser.
+  // If the connection is not localhost, we shouldn't trust the origin header.
+  // So, use address instead of origin if origin not set, then it's definitely
+  // not a browser.
   if (!(address === '::1' || address === '127.0.0.1') || origin == undefined)
     return 'ws:' + address + (port ? ':' + port : '')
 
-  //note: origin "null" (as string) can happen a bunch of ways
-  //      it can be a html opened as a file
-  //      or certain types of CORS
-  //      https://www.w3.org/TR/cors/#resource-sharing-check-0
-  //      and webworkers if loaded from data-url?
+  // Note: origin "null" (as string) can happen a bunch of ways:
+  //   * it can be a html opened as a file
+  //   * or certain types of CORS
+  //   * https://www.w3.org/TR/cors/#resource-sharing-check-0
+  //   * and webworkers if loaded from data-url?
   if (origin === 'null') return 'ws:null'
 
-  //a connection from the browser on localhost,
-  //we choose to trust this came from a browser.
+  // A connection from the browser on localhost, we choose to trust this came
+  // from a browser.
   return origin.replace(/^http/, 'ws')
 }
 
@@ -109,7 +109,7 @@ module.exports = function WS(opts = {}) {
       const stream = pullWS.connect(addr, {
         binaryType: opts.binaryType,
         onConnect: function connectionListener(err) {
-          //ensure stream is a stream of node buffers
+          // Ensure stream is a stream of node buffers
           stream.source = pull(stream.source, Map(Buffer.from.bind(Buffer)))
           cb(err, stream)
         },

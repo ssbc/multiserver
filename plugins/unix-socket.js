@@ -21,6 +21,7 @@ module.exports = function Unix(opts) {
   const addr = 'unix:' + socket
   let scope = opts.scope || 'device'
   opts = opts || {}
+  
   return {
     name: 'unix',
     scope: () => scope,

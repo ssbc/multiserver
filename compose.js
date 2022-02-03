@@ -89,9 +89,8 @@ module.exports = function Compose(ary, wrap) {
       })
     },
 
-    // There should be a callback , called with
-    // null when the server started to listen.
-    // (net.server.listen is async for example)
+    // There should be a callback , called with null when the server started to
+    // listen. (net.server.listen is async for example)
     server(onConnection, onError, onStart) {
       onError =
         onError ||
@@ -112,7 +111,9 @@ module.exports = function Compose(ary, wrap) {
         }, onStart)
       )
     },
+
     parse: parse,
+
     stringify(scope) {
       const _ary = []
       const v = proto.stringify(scope)

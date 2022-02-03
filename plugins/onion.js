@@ -4,7 +4,7 @@ const debug = require('debug')('multiserver:onion')
 
 module.exports = function Onion(opts) {
   if (!socks) {
-    //we are in browser
+    // We are in browser
     debug('onion dialing through socks proxy not supported in browser setting')
     return {
       name: 'onion',

@@ -25,8 +25,9 @@ module.exports = function Shs(opts) {
       return function shsTransform(stream, cb) {
         function _cb(err, stream) {
           if (err) {
-            //shs is designed so that we do not _know_ who is connecting if it fails,
-            //so we probably can't add the connecting address. (unless it was client unauthorized)
+            // shs is designed so that we do not _know_ who is connecting if it
+            // fails, so we probably can't add the connecting address. (unless
+            // it was client unauthorized)
             err.address = 'shs:'
             return cb(err)
           }
@@ -40,22 +41,21 @@ module.exports = function Shs(opts) {
         )
       }
     },
+
     parse(str) {
       const ary = str.split(':')
       if (ary[0] !== 'shs') return null
       let seed = undefined
-
-      //seed of private key to connect with, optional.
-
+      // Seed of private key to connect with, optional.
       if (ary.length > 2) {
         seed = Buffer.from(ary[2], 'base64')
         if (seed.length !== 32) return null
       }
       var key = Buffer.from(ary[1], 'base64')
       if (key.length !== 32) return null
-
       return { key: key, seed: seed }
     },
+
     stringify() {
       if (!keys) return
       return 'shs:' + keys.publicKey.toString('base64')

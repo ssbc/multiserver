@@ -5,10 +5,10 @@ let net
 try {
   net = require('net')
 } catch (_) {
-  // This only throws in browsers because they don't have access to the Node
-  // net library, which is safe to ignore because they shouldn't be running
-  // any methods that require the net library. Maybe we should be setting a
-  // flag somewhere rather than checking whether `net == null`?
+  // This only throws in browsers because they don't have access to the Node net
+  // library, which is safe to ignore because they shouldn't be running any
+  // methods that require the net library. Maybe we should be setting a flag
+  // somewhere rather than checking whether `net == null`?
 }
 
 const isString = (s) => 'string' == typeof s
